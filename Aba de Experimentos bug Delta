@@ -11,6 +11,9 @@ local ID_BOTAO_FECHAR = "rbxassetid://98235327129327"
 local ID_BOTAO_SELECAO = "rbxassetid://105157650009654"
 local ID_SOM_NOTIFICACAO = "rbxassetid://1293433423"
 
+-- FONTE DO CHAT
+local FONTE_PADRAO = Enum.Font.Arcade
+
 -- Prevenção de execução dupla e encerramento limpo
 if getgenv().custom_chat_loaded then
     warn("Limpando execução anterior...")
@@ -79,10 +82,10 @@ G2L.TopBar.Parent = G2L.Main
 G2L.Title = Instance.new("TextLabel")
 G2L.Title.Size = UDim2.new(1, 0, 1, 0)
 G2L.Title.BackgroundTransparency = 1
-G2L.Title.Text = "Chat Geral"
-G2L.Title.Font = Enum.Font.SourceSansBold
+G2L.Title.Text = "CHAT PRIVADO SPWNCUB"
+G2L.Title.Font = FONTE_PADRAO
 G2L.Title.TextColor3 = Color3.fromRGB(255, 255, 255)
-G2L.Title.TextSize = 20
+G2L.Title.TextSize = 18
 G2L.Title.ZIndex = 5
 G2L.Title.Parent = G2L.TopBar
 
@@ -96,7 +99,7 @@ G2L.CloseBtn.Image = ID_BOTAO_FECHAR
 G2L.CloseBtn.ZIndex = 6
 G2L.CloseBtn.Parent = G2L.TopBar
 
--- NOVO BOTÃO DE SELEÇÃO / CÓPIA
+-- NOVO BOTÃO DE SELEÇÃO / CÓPIA (COM EFEITO DE TAMANHO)
 G2L.SelectBtn = Instance.new("ImageButton")
 G2L.SelectBtn.Name = "SelectBtn"
 G2L.SelectBtn.Size = UDim2.new(0, 24, 0, 24)
@@ -107,42 +110,17 @@ G2L.SelectBtn.ImageColor3 = Color3.fromRGB(255, 255, 255)
 G2L.SelectBtn.ZIndex = 6
 G2L.SelectBtn.Parent = G2L.TopBar
 
--- AVISO DE TEXTO COPIADO
-local CopyNotice = Instance.new("TextLabel")
-CopyNotice.Size = UDim2.new(0, 180, 0, 24)
-CopyNotice.Position = UDim2.new(0.5, -90, 0, 8)
-CopyNotice.BackgroundColor3 = Color3.fromRGB(20, 25, 30)
-CopyNotice.TextColor3 = Color3.fromRGB(100, 255, 100)
-CopyNotice.Font = Enum.Font.SourceSansBold
-CopyNotice.TextSize = 13
-CopyNotice.Text = "Mensagem Copiada!"
-CopyNotice.Visible = false
-CopyNotice.ZIndex = 10
-CopyNotice.Parent = G2L.Main
-
-local NoticeCorner = Instance.new("UICorner")
-NoticeCorner.CornerRadius = UDim.new(0, 6)
-NoticeCorner.Parent = CopyNotice
-
-local NoticeStroke = Instance.new("UIStroke")
-NoticeStroke.Color = Color3.fromRGB(100, 255, 100)
-NoticeStroke.Thickness = 1
-NoticeStroke.Parent = CopyNotice
-
-local function MostrarAvisoCopia()
-    CopyNotice.Visible = true
-    task.delay(1.5, function()
-        CopyNotice.Visible = false
-    end)
-end
-
--- ALTERNAR MODO DE SELEÇÃO
+-- ALTERNAR MODO DE SELEÇÃO (Aumenta/Diminui sem alterar a cor)
 G2L.SelectBtn.MouseButton1Click:Connect(function()
     modoSelecaoAtivo = not modoSelecaoAtivo
     if modoSelecaoAtivo then
-        G2L.SelectBtn.ImageColor3 = Color3.fromRGB(80, 180, 255) -- Cor de destaque
+        -- Aumenta levemente e ajusta a posição para manter centralizado
+        G2L.SelectBtn.Size = UDim2.new(0, 28, 0, 28)
+        G2L.SelectBtn.Position = UDim2.new(1, -70, 0.5, -14)
     else
-        G2L.SelectBtn.ImageColor3 = Color3.fromRGB(255, 255, 255) -- Cor original
+        -- Volta ao tamanho e posição originais
+        G2L.SelectBtn.Size = UDim2.new(0, 24, 0, 24)
+        G2L.SelectBtn.Position = UDim2.new(1, -68, 0.5, -12)
     end
 end)
 
@@ -203,8 +181,8 @@ G2L.Input.TextColor3 = Color3.fromRGB(255, 255, 255)
 G2L.Input.PlaceholderText = "Digite uma Mensagem..."
 G2L.Input.PlaceholderColor3 = Color3.fromRGB(150, 150, 150)
 G2L.Input.TextXAlignment = Enum.TextXAlignment.Left
-G2L.Input.TextSize = 15
-G2L.Input.Font = Enum.Font.SourceSansBold
+G2L.Input.TextSize = 14
+G2L.Input.Font = FONTE_PADRAO
 G2L.Input.Parent = G2L.BottomArea
 
 G2L.SendBtn = Instance.new("ImageButton")
@@ -228,8 +206,8 @@ local function AdicionarMensagem(username, displayname, msg, isMe)
     btn.Size = UDim2.new(1, -5, 0, 18)
     btn.BackgroundTransparency = 1
     btn.RichText = true
-    btn.Font = Enum.Font.SourceSansBold
-    btn.TextSize = 15
+    btn.Font = FONTE_PADRAO
+    btn.TextSize = 14
     btn.TextXAlignment = Enum.TextXAlignment.Left
     btn.AutoButtonColor = false
 
@@ -241,21 +219,20 @@ local function AdicionarMensagem(username, displayname, msg, isMe)
     btn.ZIndex = 6
     btn.Parent = G2L.ChatHistory
 
-    -- LÓGICA DE PRESSIONAMENTO CONTÍNUO (SEGURAR PARA COPIAR)
+    -- LÓGICA DE PRESSIONAMENTO CONTÍNUO (SEGURAR PARA COPIAR SILENCIOSAMENTE)
     local pressTimer
     local isHolding = false
 
     btn.InputBegan:Connect(function(input)
         if modoSelecaoAtivo and (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) then
             isHolding = true
-            pressTimer = task.delay(0.5, function() -- Tempo de espera para considerar "pressionar e segurar"
+            pressTimer = task.delay(0.5, function()
                 if isHolding and modoSelecaoAtivo then
                     if setclipboard then
                         setclipboard(msg)
                     elseif toclipboard then
                         toclipboard(msg)
                     end
-                    MostrarAvisoCopia()
                 end
             end)
         end
