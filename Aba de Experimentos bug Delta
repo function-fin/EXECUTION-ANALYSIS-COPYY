@@ -1,314 +1,399 @@
+local G2L = {};
+
+-- CONFIGURAÇÃO DO PIESOCKET (SpwnCub V2 Chat)
+local wsUrl = "wss://free.blr2.piesocket.com/v3/1?api_key=iwYCQEyErMVj5txmeTDuzQ0Sle6V7tcAuOvlZQZp&notify_self=1"
+
+-- IDs dos Ícones da UI
+local ID_NORMAL = "rbxassetid://134601196355279"
+local ID_NOTIFICACAO = "rbxassetid://130103945046316"
+local ID_SIMBOLO_CENTRAL = "rbxassetid://85337967115080"
+local ID_BOTAO_FECHAR = "rbxassetid://98235327129327"
+local ID_BOTAO_SELECAO = "rbxassetid://105157650009654"
+local ID_SOM_NOTIFICACAO = "rbxassetid://1293433423"
+
+-- Prevenção de execução dupla e encerramento limpo
+if getgenv().custom_chat_loaded then
+    warn("Limpando execução anterior...")
+    if game:GetService("CoreGui"):FindFirstChild("GlobalChat_Elite_V3") then
+        game:GetService("CoreGui")["GlobalChat_Elite_V3"]:Destroy()
+    end
+    getgenv().custom_chat_loaded = nil
+end
+getgenv().custom_chat_loaded = true
+
 local Players = game:GetService("Players")
-local UIS = game:GetService("UserInputService")
 local HttpService = game:GetService("HttpService")
-local RunService = game:GetService("RunService")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local UserInputService = game:GetService("UserInputService")
+local ChatService = game:GetService("Chat") 
+local Player = Players.LocalPlayer
 
-local lp = Players.LocalPlayer
-local FILE_NAME = "SpwnCub_SoundDB.json"
+-- Estado do Modo de Seleção/Cópia
+local modoSelecaoAtivo = false
 
-local oldGui = lp.PlayerGui:FindFirstChild("SpwnCub_SoundSystem")
-if oldGui then oldGui:Destroy() end
+-- UI PRINCIPAL
+G2L.ScreenGui = Instance.new("ScreenGui")
+G2L.ScreenGui.Name = "GlobalChat_Elite_V3"
+G2L.ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+G2L.ScreenGui.ResetOnSpawn = false
+G2L.ScreenGui.Parent = game:GetService("CoreGui")
 
-local function Create(className, parent, properties, corner, stroke)
-    local obj = Instance.new(className)
-    for k, v in pairs(properties) do obj[k] = v end
-    if corner then Instance.new("UICorner", obj).CornerRadius = UDim.new(0, corner) end
-    if stroke then
-        local str = Instance.new("UIStroke", obj)
-        for k, v in pairs(stroke) do str[k] = v end
-    end
-    if parent then obj.Parent = parent end return obj
-end
+-- INSTÂNCIA DO SOM
+local NotificationSound = Instance.new("Sound")
+NotificationSound.Name = "ChatNotificationSound"
+NotificationSound.SoundId = ID_SOM_NOTIFICACAO
+NotificationSound.Volume = 1
+NotificationSound.Parent = G2L.ScreenGui
 
-local ID_CLOSE_X, ID_PLAY, ID_PAUSE, ID_OPEN = "rbxassetid://98235327129327", "rbxassetid://139374730149050", "rbxassetid://79479421998352", "rbxassetid://124458914211157"
-local ID_SUN, ID_RENAME, ID_SAVE_ICON = "rbxassetid://85337967115080", "rbxassetid://105157650009654", "rbxassetid://76429920789174"
+-- BOTAO TOGGLE
+G2L.ToggleButton = Instance.new("ImageButton")
+G2L.ToggleButton.Name = "ToggleChat"
+G2L.ToggleButton.Size = UDim2.new(0, 55, 0, 55)
+G2L.ToggleButton.Position = UDim2.new(0.02, 0, 0.45, 0)
+G2L.ToggleButton.BackgroundTransparency = 1 
+G2L.ToggleButton.Image = ID_NORMAL
+G2L.ToggleButton.Parent = G2L.ScreenGui
 
-local Color_BG, Color_Card, Color_SubText = Color3.fromRGB(12, 12, 14), Color3.fromRGB(20, 20, 22), Color3.fromRGB(140, 140, 145)
-local savedSongs = {}
-local isLoopingActive = false
-local loopConnection = nil -- Mudança: Connection em vez de task
+-- JANELA PRINCIPAL
+G2L.Main = Instance.new("Frame")
+G2L.Main.Name = "MainFrame"
+G2L.Main.Size = UDim2.new(0, 420, 0, 260)
+G2L.Main.Position = UDim2.new(0.5, -210, 0.5, -130)
+G2L.Main.BackgroundColor3 = Color3.fromRGB(13, 16, 19)
+G2L.Main.BackgroundTransparency = 0.05
+G2L.Main.BorderSizePixel = 0
+G2L.Main.Visible = false
+G2L.Main.Parent = G2L.ScreenGui
 
-local function loadPlaylist()
-    local s, r = pcall(function() return readfile and readfile(FILE_NAME) end)
-    if s and r then
-        local ds, dr = pcall(function() return HttpService:JSONDecode(r) end)
-        if ds and type(dr) == "table" then savedSongs = dr end
-    end
-end
+G2L.MainStroke = Instance.new("UIStroke")
+G2L.MainStroke.Color = Color3.fromRGB(255, 255, 255)
+G2L.MainStroke.Thickness = 1.5
+G2L.MainStroke.Parent = G2L.Main
 
-local function savePlaylist()
-    pcall(function() if writefile then writefile(FILE_NAME, HttpService:JSONEncode(savedSongs)) end end)
-end
-loadPlaylist()
+-- TOPBAR
+G2L.TopBar = Instance.new("Frame")
+G2L.TopBar.Size = UDim2.new(1, 0, 0, 40)
+G2L.TopBar.BackgroundTransparency = 1
+G2L.TopBar.ZIndex = 5
+G2L.TopBar.Parent = G2L.Main
 
--- ==========================================
--- SISTEMA DE ÁUDIO ALL (IDÊNTICO AO QUE FUNCIONAVA)
--- ==========================================
-local function tocarEmOutroJogador(targetPlayer, audioID)
-    if targetPlayer == lp then return end
-    if not audioID then return end
-    
-    local character = targetPlayer.Character
-    if not character then return end
-    
-    local hrp = character:FindFirstChild("HumanoidRootPart")
-    if not hrp then return end
-    
-    -- MÉTODO 1: Remote "1GuinSound1s"
-    local GunSoundEvent = ReplicatedStorage:FindFirstChild("1GuinSound1s", true)
-    if GunSoundEvent then
-        task.spawn(function()
-            pcall(function()
-                GunSoundEvent:FireServer(hrp, audioID, 10)
-            end)
-        end)
-    end
-    
-    -- MÉTODO 2: Remote "1Gu1n"
-    local GuinRemote = ReplicatedStorage:FindFirstChild("RE") and ReplicatedStorage.RE:FindFirstChild("1Gu1n")
-    if GuinRemote then
-        task.spawn(function()
-            pcall(function()
-                GuinRemote:FireServer(
-                    hrp, hrp,
-                    Vector3.new(0, -1, 0),
-                    Vector3.new(0, 0, 0),
-                    hrp, hrp,
-                    audioID, audioID,
-                    {[1] = true},
-                    {
-                        [1] = 25,
-                        [2] = Vector3.new(0.25, 0.25, 100),
-                        [3] = BrickColor.new('Bright yellow'),
-                        [4] = 0.25,
-                        [5] = Enum.Material.SmoothPlastic,
-                        [6] = 0.25
-                    },
-                    true, false
-                )
-            end)
-        end)
-    end
-    
-    -- MÉTODO 3: Som local no alvo
-    task.spawn(function()
-        pcall(function()
-            local sound = Instance.new("Sound")
-            sound.SoundId = "rbxassetid://" .. audioID
-            sound.Volume = 10
-            sound.Parent = hrp
-            sound:Play()
-            sound.Ended:Connect(function() sound:Destroy() end)
-            task.delay(30, function()
-                if sound and sound.Parent then sound:Destroy() end
-            end)
-        end)
+G2L.Title = Instance.new("TextLabel")
+G2L.Title.Size = UDim2.new(1, 0, 1, 0)
+G2L.Title.BackgroundTransparency = 1
+G2L.Title.Text = "Chat Geral"
+G2L.Title.Font = Enum.Font.SourceSansBold
+G2L.Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+G2L.Title.TextSize = 20
+G2L.Title.ZIndex = 5
+G2L.Title.Parent = G2L.TopBar
+
+-- BOTÃO DE FECHAR
+G2L.CloseBtn = Instance.new("ImageButton")
+G2L.CloseBtn.Name = "CloseBtn"
+G2L.CloseBtn.Size = UDim2.new(0, 26, 0, 26)
+G2L.CloseBtn.Position = UDim2.new(1, -35, 0.5, -13)
+G2L.CloseBtn.BackgroundTransparency = 1
+G2L.CloseBtn.Image = ID_BOTAO_FECHAR
+G2L.CloseBtn.ZIndex = 6
+G2L.CloseBtn.Parent = G2L.TopBar
+
+-- NOVO BOTÃO DE SELEÇÃO / CÓPIA
+G2L.SelectBtn = Instance.new("ImageButton")
+G2L.SelectBtn.Name = "SelectBtn"
+G2L.SelectBtn.Size = UDim2.new(0, 24, 0, 24)
+G2L.SelectBtn.Position = UDim2.new(1, -68, 0.5, -12)
+G2L.SelectBtn.BackgroundTransparency = 1
+G2L.SelectBtn.Image = ID_BOTAO_SELECAO
+G2L.SelectBtn.ImageColor3 = Color3.fromRGB(255, 255, 255)
+G2L.SelectBtn.ZIndex = 6
+G2L.SelectBtn.Parent = G2L.TopBar
+
+-- AVISO DE TEXTO COPIADO
+local CopyNotice = Instance.new("TextLabel")
+CopyNotice.Size = UDim2.new(0, 180, 0, 24)
+CopyNotice.Position = UDim2.new(0.5, -90, 0, 8)
+CopyNotice.BackgroundColor3 = Color3.fromRGB(20, 25, 30)
+CopyNotice.TextColor3 = Color3.fromRGB(100, 255, 100)
+CopyNotice.Font = Enum.Font.SourceSansBold
+CopyNotice.TextSize = 13
+CopyNotice.Text = "Mensagem Copiada!"
+CopyNotice.Visible = false
+CopyNotice.ZIndex = 10
+CopyNotice.Parent = G2L.Main
+
+local NoticeCorner = Instance.new("UICorner")
+NoticeCorner.CornerRadius = UDim.new(0, 6)
+NoticeCorner.Parent = CopyNotice
+
+local NoticeStroke = Instance.new("UIStroke")
+NoticeStroke.Color = Color3.fromRGB(100, 255, 100)
+NoticeStroke.Thickness = 1
+NoticeStroke.Parent = CopyNotice
+
+local function MostrarAvisoCopia()
+    CopyNotice.Visible = true
+    task.delay(1.5, function()
+        CopyNotice.Visible = false
     end)
 end
 
--- ==========================================
--- FUNÇÃO QUE TOCA EM TODOS (SELECIONA ID ALEATÓRIO DA LISTA)
--- ==========================================
-local function tocarEmTodos()
-    if #savedSongs == 0 then return end
-    local selectedSong = savedSongs[math.random(1, #savedSongs)]
-    local audioID = selectedSong.id
-    
-    for _, plr in ipairs(Players:GetPlayers()) do
-        if plr ~= lp and plr.Character then
-            tocarEmOutroJogador(plr, audioID)
-        end
-    end
-end
-
--- ==========================================
--- CONTROLE DO LOOP (CORRIGIDO)
--- ==========================================
-local function iniciarLoop()
-    if isLoopingActive then return end -- Evita loops duplicados
-    
-    isLoopingActive = true
-    LoopBtn.Text = "       LOOP ATIVO"
-    LoopBtn.BackgroundColor3 = Color3.fromRGB(0, 180, 80)
-    
-    -- Usa um loop simples e controlado (igual ao script original)
-    task.spawn(function()
-        while isLoopingActive do
-            tocarEmTodos()
-            task.wait(2) -- Intervalo de 2 segundos (igual ao original)
-        end
-    end)
-end
-
-local function pararLoop()
-    isLoopingActive = false
-    LoopBtn.Text = "       ATIVAR LOOP"
-    LoopBtn.BackgroundColor3 = Color_Card
-end
-
--- ==========================================
--- INTERFACE
--- ==========================================
-local ScreenGui = Create("ScreenGui", lp.PlayerGui, { Name = "SpwnCub_SoundSystem", ResetOnSpawn = false })
-local OpenBtn = Create("ImageButton", ScreenGui, { Name = "OpenToggleBtn", Size = UDim2.new(0, 50, 0, 50), Position = UDim2.new(0, 20, 0.5, -25), BackgroundTransparency = 1, Image = ID_OPEN })
-local MainFrame = Create("Frame", ScreenGui, { Name = "MainFrame", Size = UDim2.new(0, 260, 0, 420), Position = UDim2.new(0.5, -130, 0.5, -210), BackgroundColor3 = Color_BG, BorderSizePixel = 0, ClipsDescendants = true, Visible = true, Active = true }, 14, { Color = Color3.fromRGB(255, 255, 255), Thickness = 1 })
-
-local SunBg = Create("ImageLabel", MainFrame, { Size = UDim2.new(0, 280, 0, 280), AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.6, 0), BackgroundTransparency = 1, Image = ID_SUN, ImageTransparency = 0.7, ZIndex = 1 })
-local rotConn; rotConn = RunService.RenderStepped:Connect(function(dt)
-    if not MainFrame.Parent then rotConn:Disconnect() return end
-    SunBg.Rotation = (SunBg.Rotation + dt * 15) % 360
-end)
-
--- Cabeçalho
-Create("TextLabel", MainFrame, { Size = UDim2.new(1, 0, 0, 30), Position = UDim2.new(0, 0, 0, 10), BackgroundTransparency = 1, Text = "Som ALL | SpwnCub V1", TextColor3 = Color3.new(1, 1, 1), TextSize = 18, Font = Enum.Font.Arcade, ZIndex = 2 })
-Create("TextLabel", MainFrame, { Size = UDim2.new(1, 0, 0, 15), Position = UDim2.new(0, 0, 0, 38), BackgroundTransparency = 1, Text = "((p)   LOOP DE SOM POR ID   q))", TextColor3 = Color_SubText, TextSize = 9, Font = Enum.Font.Arcade, ZIndex = 2 })
-
--- Input Section
-local InputSection = Create("Frame", MainFrame, { Size = UDim2.new(1, -24, 0, 70), Position = UDim2.new(0, 12, 0, 60), BackgroundColor3 = Color_BG, BackgroundTransparency = 0.4, ZIndex = 2 }, 8)
-Create("TextLabel", InputSection, { Size = UDim2.new(1, -16, 0, 18), Position = UDim2.new(0, 10, 0, 6), BackgroundTransparency = 1, Text = "ID DO SOM", TextColor3 = Color_SubText, TextSize = 10, Font = Enum.Font.Arcade, TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 2 })
-local IdInput = Create("TextBox", InputSection, { Size = UDim2.new(0.65, -10, 0, 32), Position = UDim2.new(0, 10, 0, 28), BackgroundColor3 = Color_Card, Text = "", PlaceholderText = "Digite o ID do som...", PlaceholderColor3 = Color3.fromRGB(100, 100, 105), TextColor3 = Color3.new(1, 1, 1), TextSize = 10, Font = Enum.Font.Arcade, ClearTextOnFocus = false, ZIndex = 2 }, 6)
-local SaveBtn = Create("TextButton", InputSection, { Size = UDim2.new(0.35, -10, 0, 32), Position = UDim2.new(0.65, 5, 0, 28), BackgroundColor3 = Color_Card, Text = "       SALVAR", TextColor3 = Color3.new(1, 1, 1), TextSize = 10, Font = Enum.Font.Arcade, TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 2 }, 6)
-Create("ImageLabel", SaveBtn, { Size = UDim2.new(0, 18, 0, 18), Position = UDim2.new(0, 6, 0.5, -9), BackgroundTransparency = 1, Image = ID_SAVE_ICON, ZIndex = 3 })
-
--- Controles de Som
-local ControlsFrame = Create("Frame", MainFrame, { Size = UDim2.new(1, -24, 0, 45), Position = UDim2.new(0, 12, 0, 138), BackgroundTransparency = 1, ZIndex = 2 })
-local LoopBtn = Create("TextButton", ControlsFrame, { Size = UDim2.new(0.48, 0, 1, 0), Position = UDim2.new(0, 0, 0, 0), BackgroundColor3 = Color_Card, Text = "       ATIVAR LOOP", TextColor3 = Color3.new(1, 1, 1), TextSize = 9, Font = Enum.Font.Arcade, TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 2 }, 8)
-Create("ImageLabel", LoopBtn, { Size = UDim2.new(0, 20, 0, 20), Position = UDim2.new(0, 8, 0.5, -10), BackgroundTransparency = 1, Image = ID_PLAY, ZIndex = 2 })
-local StopBtn = Create("TextButton", ControlsFrame, { Size = UDim2.new(0.48, 0, 1, 0), Position = UDim2.new(0.52, 0, 0, 0), BackgroundColor3 = Color_Card, Text = "       DESATIVAR SOM", TextColor3 = Color3.new(1, 1, 1), TextSize = 9, Font = Enum.Font.Arcade, TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 2 }, 8)
-Create("ImageLabel", StopBtn, { Size = UDim2.new(0, 20, 0, 20), Position = UDim2.new(0, 8, 0.5, -10), BackgroundTransparency = 1, Image = ID_PAUSE, ZIndex = 2 })
-
--- Lista de Músicas
-local ListContainer = Create("Frame", MainFrame, { Size = UDim2.new(1, -24, 0, 220), Position = UDim2.new(0, 12, 0, 190), BackgroundColor3 = Color_BG, BackgroundTransparency = 0.4, ZIndex = 2 }, 8)
-local ListHeader = Create("TextLabel", ListContainer, { Size = UDim2.new(1, -20, 0, 25), Position = UDim2.new(0, 10, 0, 2), BackgroundTransparency = 1, Text = "IDS SALVOS (0)", TextColor3 = Color_SubText, TextSize = 10, Font = Enum.Font.Arcade, TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 2 })
-local SongScroll = Create("ScrollingFrame", ListContainer, { Size = UDim2.new(1, -12, 1, -30), Position = UDim2.new(0, 6, 0, 26), BackgroundTransparency = 1, BorderSizePixel = 0, ScrollBarThickness = 3, ScrollBarImageColor3 = Color_SubText, CanvasSize = UDim2.new(0, 0, 0, 0), ZIndex = 2 })
-local ScrollLayout = Create("UIListLayout", SongScroll, { SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 6) })
-local CloseMainBtn = Create("ImageButton", MainFrame, { Size = UDim2.new(0, 28, 0, 28), Position = UDim2.new(1, -34, 1, -34), BackgroundColor3 = Color_Card, Image = ID_CLOSE_X, ZIndex = 3 }, 6)
-
--- ==========================================
--- EVENTOS DOS BOTÕES (CORRIGIDOS)
--- ==========================================
-LoopBtn.MouseButton1Click:Connect(function()
-    if #savedSongs == 0 then
-        LoopBtn.Text = "       SEM IDS!"
-        task.delay(1.5, function()
-            if LoopBtn then
-                LoopBtn.Text = "       ATIVAR LOOP"
-            end
-        end)
-        return
-    end
-    
-    if isLoopingActive then
-        pararLoop()
+-- ALTERNAR MODO DE SELEÇÃO
+G2L.SelectBtn.MouseButton1Click:Connect(function()
+    modoSelecaoAtivo = not modoSelecaoAtivo
+    if modoSelecaoAtivo then
+        G2L.SelectBtn.ImageColor3 = Color3.fromRGB(80, 180, 255) -- Cor de destaque
     else
-        iniciarLoop()
+        G2L.SelectBtn.ImageColor3 = Color3.fromRGB(255, 255, 255) -- Cor original
     end
 end)
 
-StopBtn.MouseButton1Click:Connect(function()
-    pararLoop()
-end)
+-- LINHA DIVISÓRIA SUPERIOR
+G2L.TopDivider = Instance.new("Frame")
+G2L.TopDivider.Size = UDim2.new(1, 0, 0, 1)
+G2L.TopDivider.Position = UDim2.new(0, 0, 0, 40)
+G2L.TopDivider.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+G2L.TopDivider.BorderSizePixel = 0
+G2L.TopDivider.Parent = G2L.Main
 
--- ==========================================
--- ATUALIZAÇÃO DA LISTA
--- ==========================================
-local function updateListVisual()
-    for _, item in ipairs(SongScroll:GetChildren()) do
-        if item:IsA("Frame") then item:Destroy() end
+-- SÍMBOLO CENTRAL
+G2L.CenterSymbol = Instance.new("ImageLabel")
+G2L.CenterSymbol.Size = UDim2.new(0, 120, 0, 120)
+G2L.CenterSymbol.Position = UDim2.new(0.5, -60, 0.5, -45)
+G2L.CenterSymbol.BackgroundTransparency = 1
+G2L.CenterSymbol.Image = ID_SIMBOLO_CENTRAL
+G2L.CenterSymbol.ImageColor3 = Color3.fromRGB(255, 255, 255)
+G2L.CenterSymbol.ImageTransparency = 0.85
+G2L.CenterSymbol.ZIndex = 1
+G2L.CenterSymbol.Parent = G2L.Main
+
+-- HISTÓRICO DE CHAT
+G2L.ChatHistory = Instance.new("ScrollingFrame")
+G2L.ChatHistory.Size = UDim2.new(1, -20, 1, -95)
+G2L.ChatHistory.Position = UDim2.new(0, 10, 0, 45)
+G2L.ChatHistory.BackgroundTransparency = 1
+G2L.ChatHistory.ScrollBarThickness = 3
+G2L.ChatHistory.ScrollBarImageColor3 = Color3.fromRGB(100, 100, 100)
+G2L.ChatHistory.CanvasSize = UDim2.new(0, 0, 0, 0)
+G2L.ChatHistory.ZIndex = 5
+G2L.ChatHistory.Parent = G2L.Main
+
+G2L.Layout = Instance.new("UIListLayout")
+G2L.Layout.Padding = UDim.new(0, 4)
+G2L.Layout.SortOrder = Enum.SortOrder.LayoutOrder
+G2L.Layout.Parent = G2L.ChatHistory
+
+-- ÁREA INFERIOR DE INPUT
+G2L.BottomArea = Instance.new("Frame")
+G2L.BottomArea.Size = UDim2.new(1, -12, 0, 36)
+G2L.BottomArea.Position = UDim2.new(0, 6, 1, -42)
+G2L.BottomArea.BackgroundColor3 = Color3.fromRGB(5, 7, 9)
+G2L.BottomArea.BorderSizePixel = 0
+G2L.BottomArea.Parent = G2L.Main
+
+G2L.BottomStroke = Instance.new("UIStroke")
+G2L.BottomStroke.Color = Color3.fromRGB(40, 50, 60)
+G2L.BottomStroke.Thickness = 1
+G2L.BottomStroke.Parent = G2L.BottomArea
+
+G2L.Input = Instance.new("TextBox")
+G2L.Input.Size = UDim2.new(1, -50, 1, 0)
+G2L.Input.Position = UDim2.new(0, 10, 0, 0)
+G2L.Input.BackgroundTransparency = 1
+G2L.Input.Text = ""
+G2L.Input.TextColor3 = Color3.fromRGB(255, 255, 255)
+G2L.Input.PlaceholderText = "Digite uma Mensagem..."
+G2L.Input.PlaceholderColor3 = Color3.fromRGB(150, 150, 150)
+G2L.Input.TextXAlignment = Enum.TextXAlignment.Left
+G2L.Input.TextSize = 15
+G2L.Input.Font = Enum.Font.SourceSansBold
+G2L.Input.Parent = G2L.BottomArea
+
+G2L.SendBtn = Instance.new("ImageButton")
+G2L.SendBtn.Size = UDim2.new(0, 22, 0, 22)
+G2L.SendBtn.Position = UDim2.new(1, -32, 0.5, -11)
+G2L.SendBtn.BackgroundTransparency = 1
+G2L.SendBtn.Image = "rbxassetid://18940312887"
+G2L.SendBtn.ImageColor3 = Color3.fromRGB(255, 255, 255)
+G2L.SendBtn.Parent = G2L.BottomArea
+
+-- LOGICA DE MENSAGENS E BUBBLE
+local function MostrarBubbleChat(username, message)
+    local targetPlayer = Players:FindFirstChild(username)
+    if targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("Head") then
+        ChatService:Chat(targetPlayer.Character.Head, message, Enum.ChatColor.White)
     end
-    ListHeader.Text = "IDS SALVOS (" .. #savedSongs .. ")"
-
-    for index, songData in ipairs(savedSongs) do
-        local Card = Create("Frame", SongScroll, { Size = UDim2.new(1, -4, 0, 42), BackgroundColor3 = Color_Card, BorderSizePixel = 0, ZIndex = 2 }, 6)
-        local PlayItemBtn = Create("ImageButton", Card, { Size = UDim2.new(0, 20, 0, 20), Position = UDim2.new(0, 8, 0.5, -10), BackgroundTransparency = 1, Image = ID_PLAY, ZIndex = 2 })
-        local NameLabel = Create("TextLabel", Card, { Size = UDim2.new(0.55, 0, 0, 16), Position = UDim2.new(0, 36, 0, 5), BackgroundTransparency = 1, Text = songData.name, TextColor3 = Color3.new(1, 1, 1), TextSize = 10, Font = Enum.Font.Arcade, TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 2 })
-        local NameInput = Create("TextBox", Card, { Size = UDim2.new(0.55, 0, 0, 18), Position = UDim2.new(0, 36, 0, 4), BackgroundColor3 = Color3.fromRGB(35, 35, 40), Text = songData.name, TextColor3 = Color3.new(1, 1, 1), TextSize = 10, Font = Enum.Font.Arcade, Visible = false, ZIndex = 5, ClearTextOnFocus = false }, 4)
-        Create("TextLabel", Card, { Size = UDim2.new(0.55, 0, 0, 14), Position = UDim2.new(0, 36, 0, 21), BackgroundTransparency = 1, Text = tostring(songData.id), TextColor3 = Color_SubText, TextSize = 9, Font = Enum.Font.Arcade, TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 2 })
-        local RenameBtn = Create("ImageButton", Card, { Size = UDim2.new(0, 16, 0, 16), Position = UDim2.new(1, -44, 0.5, -8), BackgroundTransparency = 1, Image = ID_RENAME, ZIndex = 2 })
-        local DelItemBtn = Create("ImageButton", Card, { Size = UDim2.new(0, 16, 0, 16), Position = UDim2.new(1, -22, 0.5, -8), BackgroundTransparency = 1, Image = ID_CLOSE_X, ZIndex = 2 })
-
-        PlayItemBtn.MouseButton1Click:Connect(function()
-            IdInput.Text = tostring(songData.id)
-        end)
-
-        RenameBtn.MouseButton1Click:Connect(function()
-            NameLabel.Visible = false
-            NameInput.Visible = true
-            NameInput:CaptureFocus()
-        end)
-
-        NameInput.FocusLost:Connect(function()
-            if NameInput.Text ~= "" then
-                songData.name = NameInput.Text
-                savePlaylist()
-            end
-            NameLabel.Text = songData.name
-            NameInput.Visible = false
-            NameLabel.Visible = true
-        end)
-
-        DelItemBtn.MouseButton1Click:Connect(function()
-            table.remove(savedSongs, index)
-            savePlaylist()
-            updateListVisual()
-        end)
-    end
-    SongScroll.CanvasSize = UDim2.new(0, 0, 0, ScrollLayout.AbsoluteContentSize.Y + 10)
 end
 
-SaveBtn.MouseButton1Click:Connect(function()
-    local idDigitado = IdInput.Text:match("%d+")
-    if idDigitado then
-        table.insert(savedSongs, {id = idDigitado, name = "Som " .. (#savedSongs + 1)})
-        savePlaylist()
-        updateListVisual()
-        IdInput.Text = ""
-    end
-end)
+local function AdicionarMensagem(username, displayname, msg, isMe)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(1, -5, 0, 18)
+    btn.BackgroundTransparency = 1
+    btn.RichText = true
+    btn.Font = Enum.Font.SourceSansBold
+    btn.TextSize = 15
+    btn.TextXAlignment = Enum.TextXAlignment.Left
+    btn.AutoButtonColor = false
 
-CloseMainBtn.MouseButton1Click:Connect(function()
-    pararLoop()
-    ScreenGui:Destroy()
-end)
+    local nameColor = isMe and "rgb(255,100,100)" or "rgb(190,100,255)"
+    btn.Text = string.format("<font color='%s'>%s:</font> <font color='rgb(255,255,255)'>%s</font>", nameColor, displayname, msg)
 
-OpenBtn.MouseButton1Click:Connect(function()
-    MainFrame.Visible = not MainFrame.Visible
-end)
+    btn.AutomaticSize = Enum.AutomaticSize.Y
+    btn.TextWrapped = true
+    btn.ZIndex = 6
+    btn.Parent = G2L.ChatHistory
 
--- Novo jogador
-Players.PlayerAdded:Connect(function(newPlayer)
-    if newPlayer == lp then return end
-    newPlayer.CharacterAdded:Connect(function(character)
-        if isLoopingActive then
-            task.wait(0.5)
-            local selectedSong = savedSongs[math.random(1, #savedSongs)]
-            tocarEmOutroJogador(newPlayer, selectedSong.id)
+    -- LÓGICA DE PRESSIONAMENTO CONTÍNUO (SEGURAR PARA COPIAR)
+    local pressTimer
+    local isHolding = false
+
+    btn.InputBegan:Connect(function(input)
+        if modoSelecaoAtivo and (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) then
+            isHolding = true
+            pressTimer = task.delay(0.5, function() -- Tempo de espera para considerar "pressionar e segurar"
+                if isHolding and modoSelecaoAtivo then
+                    if setclipboard then
+                        setclipboard(msg)
+                    elseif toclipboard then
+                        toclipboard(msg)
+                    end
+                    MostrarAvisoCopia()
+                end
+            end)
         end
     end)
-end)
 
--- Draggable
-local function makeDraggable(obj)
-    local dragging, dragStart, startPos
-    obj.InputBegan:Connect(function(input)
+    btn.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            isHolding = false
+            if pressTimer then
+                task.cancel(pressTimer)
+            end
+        end
+    end)
+
+    G2L.ChatHistory.CanvasPosition = Vector2.new(0, G2L.Layout.AbsoluteContentSize.Y)
+
+    if not G2L.Main.Visible and not isMe then
+        G2L.ToggleButton.Image = ID_NOTIFICACAO
+        NotificationSound:Play()
+    end
+
+    MostrarBubbleChat(username, msg)
+end
+
+-- SISTEMA DE REDE
+local socket
+local running = true
+
+local function ConnectWebSocket()
+    if not running then return end
+
+    local success, res = pcall(function()
+        return WebSocket.connect(wsUrl)
+    end)
+
+    if success and res then
+        socket = res
+        print("SpwnCub V2 Chat Conectado com sucesso!")
+
+        socket.OnMessage:Connect(function(msg)
+            if not running then return end
+            local ok, data = pcall(function() return HttpService:JSONDecode(msg) end)
+            if ok and data.message then
+                local dName = data.nickname or data.username
+                AdicionarMensagem(data.username, dName, data.message, data.username == Player.Name)
+            end
+        end)
+
+        socket.OnClose:Connect(function()
+            if running then
+                warn("Conexão interrompida. Tentando reconectar...")
+                task.wait(5)
+                ConnectWebSocket()
+            end
+        end)
+    else
+        if running then
+            warn("Erro de conexão com o novo cluster. Reajustando em 5 segundos...")
+            task.wait(5)
+            ConnectWebSocket()
+        end
+    end
+end
+
+-- Botão Enviar
+local function EnviarMensagem()
+    if socket and G2L.Input.Text ~= "" then
+        local success, err = pcall(function()
+            socket:Send(HttpService:JSONEncode({
+                username = Player.Name, 
+                nickname = Player.DisplayName, 
+                message = G2L.Input.Text
+            }))
+        end)
+        if not success then 
+            warn("Falha no envio (Socket morto). Tentando reconectar...")
+            ConnectWebSocket()
+        end
+        G2L.Input.Text = ""
+    elseif not socket then
+        warn("Chat desconectado. Aguarde a reconexão.")
+    end
+end
+
+G2L.SendBtn.MouseButton1Click:Connect(EnviarMensagem)
+G2L.Input.FocusLost:Connect(function(enter) if enter then EnviarMensagem() end end)
+
+-- FUNÇÃO DE ARRASTE
+local function MakeDraggable(gui)
+    local dragging, dragInput, dragStart, startPos
+    gui.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             dragging = true
             dragStart = input.Position
-            startPos = obj.Position
+            startPos = gui.Position
             input.Changed:Connect(function()
                 if input.UserInputState == Enum.UserInputState.End then dragging = false end
             end)
         end
     end)
-    UIS.InputChanged:Connect(function(input)
-        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+    gui.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+            dragInput = input
+        end
+    end)
+    UserInputService.InputChanged:Connect(function(input)
+        if input == dragInput and dragging then
             local delta = input.Position - dragStart
-            obj.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+            gui.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
         end
     end)
 end
 
-makeDraggable(MainFrame)
-makeDraggable(OpenBtn)
-updateListVisual()
+MakeDraggable(G2L.Main)
+MakeDraggable(G2L.ToggleButton)
+
+G2L.ToggleButton.MouseButton1Click:Connect(function() 
+    G2L.Main.Visible = not G2L.Main.Visible 
+    if G2L.Main.Visible then
+        G2L.ToggleButton.Image = ID_NORMAL
+    end
+end)
+
+-- Ação do Botão de Fechar
+G2L.CloseBtn.MouseButton1Click:Connect(function()
+    running = false
+    getgenv().custom_chat_loaded = nil
+    if socket then
+        pcall(function() socket:Close() end)
+    end
+    G2L.ScreenGui:Destroy()
+    print("Script de Chat Encerrado Definitivamente.")
+end)
+
+task.spawn(ConnectWebSocket)
+
+G2L.Layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+    G2L.ChatHistory.CanvasSize = UDim2.new(0, 0, 0, G2L.Layout.AbsoluteContentSize.Y + 10)
+end)
+
+return G2L.ScreenGui
