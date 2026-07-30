@@ -158,55 +158,12 @@ LeftBtn.MouseButton1Click:Connect(function()
     end 
 end)
 
-local function X7()
-    local Y8 = {
-        ["GITHUB"] = "Function-fin",
-        ["github"] = "function-fin"
-    }
-    local Z9 = {}
-    function Z9:Z10(A)
-        if not A or type(A) ~= "string" then
-            return A
-        end
-        local B = A
-        for C, D in pairs(Y8) do
-            B = string.gsub(B, C, D)
-        end
-        return B
+local function ReplaceGithub(link)
+    if not link or type(link) ~= "string" then
+        return link
     end
-    local E = {}
-    function Z9:Z11(A)
-        if E[A] then
-            return E[A]
-        end
-        local B = self:Z10(A)
-        E[A] = B
-        return B
-    end
-    function Z9:Z12(A)
-        local B = self:Z11(A)
-        if not B or not string.match(B, "^https?://") then
-            return false
-        end
-        local F, G = pcall(function()
-            return loadstring(game:HttpGet(B))()
-        end)
-        if not F then
-            E[A] = nil
-            local H = self:Z11(A)
-            if H ~= B then
-                loadstring(game:HttpGet(H))()
-                return true
-            end
-            return false
-        end
-        return true
-    end
-    return Z9
+    return string.gsub(link, "GITHUB", "Function-fin")
 end
-
-local I = X7()
-X7 = nil
 
 local ScriptData = {
     ["Terminal Join Server"] = "https://raw.githubusercontent.com/GITHUB/Terminal-Join-Server-SpwnCub-/refs/heads/main/SPWN%20Join",
@@ -259,13 +216,14 @@ for name, link in pairs(ScriptData) do
         TextYAlignment = Enum.TextYAlignment.Center
     })
     Create("UICorner", btn, {CornerRadius = UDim.new(0, 4)})
-    local J = link
+    local originalLink = link
     btn.MouseButton1Click:Connect(function() 
         PlayClickSound()
-        if string.find(J, "rawscripts.net") then
-            loadstring(game:HttpGet(J))()
+        if string.find(originalLink, "rawscripts.net") then
+            loadstring(game:HttpGet(originalLink))()
         else
-            I:Z12(J)
+            local realLink = ReplaceGithub(originalLink)
+            loadstring(game:HttpGet(realLink))()
         end
     end)
 end
@@ -299,10 +257,11 @@ for _, data in ipairs(ToolData) do
     Create("UICorner", toolBtn, {CornerRadius = UDim.new(0, 2)})
 
     if data.link ~= "" then
-        local K = data.link
+        local originalToolLink = data.link
         toolBtn.MouseButton1Click:Connect(function() 
             PlayClickSound()
-            I:Z12(K)
+            local realLink = ReplaceGithub(originalToolLink)
+            loadstring(game:HttpGet(realLink))()
         end)
     else
         toolBtn.AutoButtonColor = false
