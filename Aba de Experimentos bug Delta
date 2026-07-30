@@ -191,10 +191,10 @@ local encryptedTools = {
 }
 
 -- ============================================
--- SISTEMA DE DECRIPTAÇÃO (Cifra de César - Deslocamento 9)
+-- FUNÇÃO DE DECRIPTAÇÃO (Cifra de César -9)
 -- ============================================
 
-local function _decrypt(text)
+local function decrypt(text)
     local result = ""
     for i = 1, #text do
         local char = string.byte(text, i)
@@ -214,33 +214,33 @@ local function _decrypt(text)
 end
 
 -- ============================================
--- SISTEMA DE SUBSTITUIÇÃO (ZQHENS → function-fin)
+-- FUNÇÃO DE SUBSTITUIÇÃO (ZQHENS → function-fin)
 -- ============================================
 
-local function _replaceUser(link)
-    local fake = "ZQHENS"
-    local real = "function-fin"
-    if string.find(link, fake) then
-        return string.gsub(link, fake, real)
+local function replaceUser(link)
+    if string.find(link, "ZQHENS") then
+        return string.gsub(link, "ZQHENS", "function-fin")
     end
     return link
 end
 
 -- ============================================
--- FUNÇÃO DE EXECUÇÃO (TUDO POR TRÁS DAS CORTINAS)
+-- FUNÇÃO DE EXECUÇÃO (PROCESSA TUDO NO CLIQUE)
 -- ============================================
 
-local function _executeScript(encryptedName, encryptedLink)
+local function executeScript(encryptedName, encryptedLink)
     PlayClickSound()
     
-    -- PASSO 1: Decriptar o nome e o link
-    local name = _decrypt(encryptedName)
-    local link = _decrypt(encryptedLink)
+    -- PASSO 1: Decriptar o nome (só para exibir no warn)
+    local name = decrypt(encryptedName)
     
-    -- PASSO 2: Substituir o usuário (ZQHENS → function-fin)
-    link = _replaceUser(link)
+    -- PASSO 2: Decriptar o link
+    local link = decrypt(encryptedLink)
     
-    -- PASSO 3: Executar a loadstring
+    -- PASSO 3: Substituir o usuário (ZQHENS → function-fin)
+    link = replaceUser(link)
+    
+    -- PASSO 4: Executar a loadstring
     local success, err = pcall(function()
         loadstring(game:HttpGet(link))()
     end)
@@ -255,7 +255,7 @@ end
 -- ============================================
 
 for encName, encLink in pairs(encryptedScripts) do
-    local displayName = _decrypt(encName)
+    local displayName = decrypt(encName)
     
     local btn = Create("TextButton", PageScripts, {
         BackgroundColor3 = Color3.fromRGB(35,35,35), 
@@ -269,11 +269,8 @@ for encName, encLink in pairs(encryptedScripts) do
     })
     Create("UICorner", btn, {CornerRadius = UDim.new(0, 4)})
     
-    btn.encryptedName = encName
-    btn.encryptedLink = encLink
-    
     btn.MouseButton1Click:Connect(function()
-        _executeScript(btn.encryptedName, btn.encryptedLink)
+        executeScript(encName, encLink)
     end)
 end
 
@@ -284,7 +281,7 @@ end
 for _, data in ipairs(encryptedTools) do
     local displayName = ""
     if data.name ~= "" then
-        displayName = _decrypt(data.name)
+        displayName = decrypt(data.name)
     end
     
     local btn = Create("TextButton", PageTools, {
@@ -300,11 +297,8 @@ for _, data in ipairs(encryptedTools) do
     Create("UICorner", btn, {CornerRadius = UDim.new(0, 2)})
 
     if data.link ~= "" then
-        btn.encryptedName = data.name
-        btn.encryptedLink = data.link
-        
         btn.MouseButton1Click:Connect(function()
-            _executeScript(btn.encryptedName, btn.encryptedLink)
+            executeScript(data.name, data.link)
         end)
     else
         btn.AutoButtonColor = false
@@ -318,7 +312,6 @@ end
 local lastClick = 0
 OpenBtn.MouseButton1Click:Connect(function()
     local currentTime = tick()
-    if (currentTime = tick()
     if (currentTime - lastClick) < 0.35 then 
         ScreenGui:Destroy() 
     else 
