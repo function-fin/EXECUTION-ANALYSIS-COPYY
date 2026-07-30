@@ -107,9 +107,17 @@ local DiscordBtn = Create("ImageButton", FooterBar, {
     Visible = true 
 })
 
+local function ReplaceGithub(link)
+    if not link or type(link) ~= "string" then
+        return link
+    end
+    return string.gsub(link, "GITHUB", "Function-fin")
+end
+
 DiscordBtn.MouseButton1Click:Connect(function()
     PlayClickSound()
-    loadstring(game:HttpGet("https://raw.githubusercontent.com/GITHUB/Join-Discordv1/refs/heads/main/Discord%20Open"))()
+    local discordLink = ReplaceGithub("https://raw.githubusercontent.com/GITHUB/Join-Discordv1/refs/heads/main/Discord%20Open")
+    loadstring(game:HttpGet(discordLink))()
 end)
 
 local currentPage = 1
@@ -157,13 +165,6 @@ LeftBtn.MouseButton1Click:Connect(function()
         updateNavigation(currentPage - 1) 
     end 
 end)
-
-local function ReplaceGithub(link)
-    if not link or type(link) ~= "string" then
-        return link
-    end
-    return string.gsub(link, "GITHUB", "Function-fin")
-end
 
 local ScriptData = {
     ["Terminal Join Server"] = "https://raw.githubusercontent.com/GITHUB/Terminal-Join-Server-SpwnCub-/refs/heads/main/SPWN%20Join",
