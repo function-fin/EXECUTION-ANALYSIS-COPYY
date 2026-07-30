@@ -95,7 +95,11 @@ end
 CreateSymbol(UDim2.new(0, 15, 0.5, -22)); CreateSymbol(UDim2.new(1, -60, 0.5, -22))
 
 local DiscordBtn = Create("ImageButton", FooterBar, {Name = "DiscordBtn", Size = UDim2.new(0, 45, 0, 45), Position = UDim2.new(0, 65, 0.5, -22), BackgroundTransparency = 1, Image = "rbxassetid://135394655692633", Visible = true})
-DiscordBtn.MouseButton1Click:Connect(function() PlayClickSound(); loadstring(game:HttpGet("https://raw.githubusercontent.com/function-fin/Join-Discordv1/refs/heads/main/Discord%20Open"))() end)
+DiscordBtn.MouseButton1Click:Connect(function() 
+    PlayClickSound() 
+    local link = "https://raw.githubusercontent.com/function-fin/Join-Discordv1/refs/heads/main/Discord%20Open"
+    loadstring(game:HttpGet(link))() 
+end)
 
 local currentPage = 1
 local function updateNavigation(page)
@@ -133,7 +137,7 @@ RightBtn.MouseButton1Click:Connect(function() if currentPage < 3 then PlayClickS
 LeftBtn.MouseButton1Click:Connect(function() if currentPage > 1 then PlayClickSound(); updateNavigation(currentPage - 1) end end)
 
 -- ============================================
---  BANCO DE DADOS
+-- DADOS CIFRADOS (Cifra de César - Deslocamento 9)
 -- ============================================
 
 local encryptedScripts = {
@@ -191,7 +195,7 @@ local encryptedTools = {
 }
 
 -- ============================================
--- SISTEMA DE ANIMAÇÃO DA INTRO
+-- SISTEMA DE DECRIPTAÇÃO (Cifra de César +9)
 -- ============================================
 
 local function _decrypt(text)
@@ -214,7 +218,7 @@ local function _decrypt(text)
 end
 
 -- ============================================
--- SISTEMA DE ARRASTO DA INTERFACE 
+-- SISTEMA DE SUBSTITUIÇÃO (ZQHENS → function-fin)
 -- ============================================
 
 local function _replaceUser(link)
@@ -227,48 +231,39 @@ local function _replaceUser(link)
 end
 
 -- ============================================
--- SISTEMA DE FONTES
+-- FUNÇÃO DE EXECUÇÃO (TUDO POR TRÁS DAS CORTINAS)
 -- ============================================
 
-local processedScripts = {}
-local processedTools = {}
+local function _executeScript(encryptedName, encryptedLink)
+    PlayClickSound()
+    
+    -- PASSO 1: Decriptar o nome e o link
+    local name = _decrypt(encryptedName)
+    local link = _decrypt(encryptedLink)
+    
+    -- PASSO 2: Substituir o usuário
+    link = _replaceUser(link)
+    
+    -- PASSO 3: Executar a loadstring
+    local success, err = pcall(function()
+        loadstring(game:HttpGet(link))()
+    end)
+    
+    if not success then
+        warn("Erro ao executar " .. name .. ": " .. tostring(err))
+    end
+end
 
--- PASSO 1: Decriptar dados
+-- ============================================
+-- GERADOR DE BOTÕES (Página 2 - Scripts)
+-- ============================================
+
 for encName, encLink in pairs(encryptedScripts) do
-    local name = _decrypt(encName)
-    local link = _decrypt(encLink)
-    processedScripts[name] = link
-end
-
-for _, data in ipairs(encryptedTools) do
-    if data.link ~= "" then
-        local name = _decrypt(data.name)
-        local link = _decrypt(data.link)
-        table.insert(processedTools, {name = name, link = link})
-    else
-        table.insert(processedTools, {name = "", link = ""})
-    end
-end
-
--- PASSO 2: Substituir usuário em todos os links
-for name, link in pairs(processedScripts) do
-    processedScripts[name] = _replaceUser(link)
-end
-
-for i, data in ipairs(processedTools) do
-    if data.link ~= "" then
-        processedTools[i].link = _replaceUser(data.link)
-    end
-end
-
--- ============================================
--- GERADOR DE BOTÕES (Página 2)
--- ============================================
-
-for name, link in pairs(processedScripts) do
+    local displayName = _decrypt(encName)
+    
     local btn = Create("TextButton", PageScripts, {
         BackgroundColor3 = Color3.fromRGB(35,35,35), 
-        Text = name, 
+        Text = displayName, 
         TextColor3 = Color3.fromRGB(255,255,255), 
         TextSize = 15, 
         Font = Enum.Font.Arcade, 
@@ -278,25 +273,28 @@ for name, link in pairs(processedScripts) do
     })
     Create("UICorner", btn, {CornerRadius = UDim.new(0, 4)})
     
+    -- Armazena os dados cifrados no botão
+    btn.encryptedName = encName
+    btn.encryptedLink = encLink
+    
     btn.MouseButton1Click:Connect(function()
-        PlayClickSound()
-        local success, err = pcall(function()
-            loadstring(game:HttpGet(link))()
-        end)
-        if not success then
-            warn("Erro: " .. tostring(err))
-        end
+        _executeScript(btn.encryptedName, btn.encryptedLink)
     end)
 end
 
 -- ============================================
--- GERADOR DE BOTÕES (Página 3)
+-- GERADOR DE BOTÕES (Página 3 - Tools)
 -- ============================================
 
-for _, data in ipairs(processedTools) do
+for _, data in ipairs(encryptedTools) do
+    local displayName = ""
+    if data.name ~= "" then
+        displayName = _decrypt(data.name)
+    end
+    
     local btn = Create("TextButton", PageTools, {
         BackgroundColor3 = Color3.fromRGB(45, 45, 45),
-        Text = data.name,
+        Text = displayName,
         TextColor3 = Color3.fromRGB(255, 255, 255),
         TextSize = 16, 
         Font = Enum.Font.LuckiestGuy, 
@@ -307,14 +305,11 @@ for _, data in ipairs(processedTools) do
     Create("UICorner", btn, {CornerRadius = UDim.new(0, 2)})
 
     if data.link ~= "" then
+        btn.encryptedName = data.name
+        btn.encryptedLink = data.link
+        
         btn.MouseButton1Click:Connect(function()
-            PlayClickSound()
-            local success, err = pcall(function()
-                loadstring(game:HttpGet(data.link))()
-            end)
-            if not success then
-                warn("Erro: " .. tostring(err))
-            end
+            _executeScript(btn.encryptedName, btn.encryptedLink)
         end)
     else
         btn.AutoButtonColor = false
@@ -323,7 +318,7 @@ end
 
 -- ============================================
 -- LÓGICA DO BOTÃO OPEN
---============================================
+-- ============================================
 
 local lastClick = 0
 OpenBtn.MouseButton1Click:Connect(function()
