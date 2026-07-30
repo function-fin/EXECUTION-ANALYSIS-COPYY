@@ -109,7 +109,7 @@ local DiscordBtn = Create("ImageButton", FooterBar, {
 
 DiscordBtn.MouseButton1Click:Connect(function()
     PlayClickSound()
-    loadstring(game:HttpGet("https://raw.githubusercontent.com/YuMAID369/Join-Discordv1/refs/heads/main/Discord%20Open"))()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/GITHUB/Join-Discordv1/refs/heads/main/Discord%20Open"))()
 end)
 
 local currentPage = 1
