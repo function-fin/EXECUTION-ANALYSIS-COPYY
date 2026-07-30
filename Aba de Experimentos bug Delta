@@ -1,102 +1,6 @@
--- ============================================
--- SISTEMA DE OFUSCAÇÃO SPWNCUB v2.0
--- ============================================
-
 local TweenService, CoreGui, UIS = game:GetService("TweenService"), game:GetService("CoreGui"), game:GetService("UserInputService")
 local PlayerGui = game.Players.LocalPlayer:WaitForChild("PlayerGui")
 
--- ============================================
--- NÚCLEO DE OFUSCAÇÃO (ESCONDIDO)
--- ============================================
-local function ObfuscatedCore()
-    -- Esta função contém o coração do sistema de ofuscação
-    -- Ela é executada imediatamente e depois "esquecida"
-    
-    -- Mapeamento de substituição
-    local replaceMap = {
-        ["GITHUB"] = "Function-fin",
-        ["github"] = "function-fin"
-    }
-    
-    -- Função que substitui padrões no texto
-    local function replacePattern(text, pattern, replacement)
-        return string.gsub(text, pattern, replacement)
-    end
-    
-    -- Sistema de atualização de links
-    local linkUpdater = {}
-    
-    function linkUpdater:ProcessLink(originalLink)
-        if not originalLink or type(originalLink) ~= "string" then
-            return originalLink
-        end
-        
-        local processed = originalLink
-        
-        -- Substitui GITHUB por Function-fin
-        for old, new in pairs(replaceMap) do
-            processed = replacePattern(processed, old, new)
-        end
-        
-        return processed
-    end
-    
-    -- Sistema de cache para evitar reprocessamento
-    local linkCache = {}
-    
-    function linkUpdater:GetRealLink(originalLink)
-        if linkCache[originalLink] then
-            return linkCache[originalLink]
-        end
-        
-        local realLink = self:ProcessLink(originalLink)
-        linkCache[originalLink] = realLink
-        return realLink
-    end
-    
-    -- Função de execução segura
-    function linkUpdater:ExecuteScript(link)
-        local realLink = self:GetRealLink(link)
-        
-        -- Verificação básica de segurança
-        if not realLink or not string.match(realLink, "^https?://") then
-            warn("[SPWN] Link inválido: " .. tostring(realLink))
-            return false
-        end
-        
-        -- Executa com proteção
-        local success, result = pcall(function()
-            return loadstring(game:HttpGet(realLink))()
-        end)
-        
-        if not success then
-            warn("[SPWN] Erro na execução: " .. tostring(result))
-            -- Tenta recarregar o link
-            linkCache[originalLink] = nil
-            local retryLink = self:GetRealLink(originalLink)
-            if retryLink ~= realLink then
-                loadstring(game:HttpGet(retryLink))()
-                return true
-            end
-            return false
-        end
-        
-        return true
-    end
-    
-    -- Retorna o sistema de atualização
-    return linkUpdater
-end
-
--- Executa o núcleo de ofuscação e mantém apenas a referência necessária
-local LinkProcessor = ObfuscatedCore()
-
--- Limpa a função da memória (opcional)
-ObfuscatedCore = nil
-
--- ============================================
--- FUNÇÃO CONSTRUTORA OTIMIZADA
--- ============================================
 local function Create(className, parent, properties)
     local obj = Instance.new(className)
     for k, v in pairs(properties) do obj[k] = v end
@@ -104,15 +8,9 @@ local function Create(className, parent, properties)
     return obj
 end
 
--- ============================================
--- JANELAS PRINCIPAIS
--- ============================================
 local ScreenGui = Create("ScreenGui", PlayerGui, {Name = "BrookHaven_V16_Final", ResetOnSpawn = false})
 local IntroGui = Create("ScreenGui", CoreGui, {Name = "CubnitSpinIntro", ResetOnSpawn = false, IgnoreGuiInset = true, DisplayOrder = 999999})
 
--- ============================================
--- EFETIO SONORO
--- ============================================
 local ClickSound = Create("Sound", ScreenGui, {
     SoundId = "rbxassetid://105309724097406",
     Volume = 1,
@@ -126,19 +24,12 @@ local function PlayClickSound()
     ClickSound:Play()
 end
 
--- ============================================
--- ELEMENTOS DA INTRO
--- ============================================
 local Background = Create("Frame", IntroGui, {Name = "Background", Size = UDim2.new(1, 1000, 1, 1000), Position = UDim2.new(0, -500, 0, -500), BackgroundColor3 = Color3.fromRGB(0,0,0), BackgroundTransparency = 1, BorderSizePixel = 0, ZIndex = 9999})
 local IconImage = Create("ImageLabel", IntroGui, {Name = "SpinIcon", BackgroundTransparency = 1, Image = "rbxassetid://130275641191868", ImageColor3 = Color3.fromRGB(255,255,255), ImageTransparency = 1, Size = UDim2.new(0, 250, 0, 250), AnchorPoint = Vector2.new(0.5,0.5), ZIndex = 10000, Position = UDim2.new(-0.2, 0, 1.2, 0), Rotation = -180})
 Create("UIAspectRatioConstraint", IconImage, {AspectRatio = 1})
 
--- ============================================
--- BOTÃO DE CONTROLE EXTERNO
--- ============================================
 local OpenBtn = Create("ImageButton", ScreenGui, {Name = "OpenBtn", Position = UDim2.new(0.5, 0, 0.5, 0), AnchorPoint = Vector2.new(0.5, 0.5), Size = UDim2.new(0, 85, 0, 85), BackgroundTransparency = 1, Image = "rbxassetid://125616167121065", ImageTransparency = 1, Visible = true})
 
--- Sistema de Arrasto
 local dragToggle, dragStart, startPos
 OpenBtn.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
@@ -157,16 +48,10 @@ UIS.InputChanged:Connect(function(input)
 end)
 UIS.InputEnded:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then dragToggle = false end end)
 
--- ============================================
--- QUADRO PRINCIPAL
--- ============================================
 local MainFrame = Create("Frame", ScreenGui, {Name = "MainFrame", AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.5, 0), Size = UDim2.new(0, 420, 0, 310), BackgroundColor3 = Color3.fromRGB(0,0,0), BorderSizePixel = 0, Active = true, Draggable = true, Visible = false})
 Create("UICorner", MainFrame, {CornerRadius = UDim.new(0, 8)})
 Create("UIStroke", MainFrame, {Color = Color3.fromRGB(255, 255, 255), Thickness = 1, ApplyStrokeMode = Enum.ApplyStrokeMode.Border})
 
--- ============================================
--- CABEÇALHO
--- ============================================
 local HeaderBar = Create("Frame", MainFrame, {Size = UDim2.new(1, 0, 0, 65), BackgroundTransparency = 1})
 local Title = Create("TextLabel", HeaderBar, {Size = UDim2.new(1, 0, 0, 50), Position = UDim2.new(0, 0, 0, 5), BackgroundTransparency = 1, Text = "Sobre o ᓵ⚍ʖリ╎ℸ ", TextColor3 = Color3.fromRGB(255,255,255), TextSize = 28, Font = Enum.Font.Arcade, TextWrapped = true, TextXAlignment = Enum.TextXAlignment.Center, TextYAlignment = Enum.TextYAlignment.Center})
 local WhiteSeparator = Create("Frame", HeaderBar, {Name = "WhiteSeparator", Size = UDim2.new(1, -20, 0, 7), Position = UDim2.new(0.5, 0, 0, 58), AnchorPoint = Vector2.new(0.5, 0), BackgroundColor3 = Color3.fromRGB(255,255,255), BorderSizePixel = 0})
@@ -175,11 +60,6 @@ local LeftBtn = Create("TextButton", HeaderBar, {Size = UDim2.new(0, 38, 0, 38),
 local RightBtn = Create("TextButton", HeaderBar, {Size = UDim2.new(0, 38, 0, 38), Position = UDim2.new(1, -48, 0, 10), BackgroundColor3 = Color3.fromRGB(255,255,255), Text = ">", TextColor3 = Color3.fromRGB(0,0,0), TextSize = 28, Font = Enum.Font.SourceSansBold, ZIndex = 10})
 Create("UICorner", LeftBtn, {CornerRadius = UDim.new(0, 6)}); Create("UICorner", RightBtn, {CornerRadius = UDim.new(0, 6)})
 
--- ============================================
--- PÁGINAS DE CONTEÚDO
--- ============================================
-
--- PÁGINA 1: ABOUT
 local PageAbout = Create("ScrollingFrame", MainFrame, {Size = UDim2.new(1, -20, 1, -145), Position = UDim2.new(0, 12, 0, 75), BackgroundTransparency = 1, CanvasSize = UDim2.new(0, 0, 0, 400), ScrollBarThickness = 3, ScrollingDirection = Enum.ScrollingDirection.Y, Visible = true})
 Create("UIPadding", PageAbout, {PaddingLeft = UDim.new(0, 6), PaddingRight = UDim.new(0, 12), PaddingTop = UDim.new(0, 5)})
 
@@ -196,20 +76,14 @@ local AboutTextLabel = Create("TextLabel", PageAbout, {
     TextYAlignment = Enum.TextYAlignment.Top
 })
 
--- PÁGINA 2: SCRIPTS
 local PageScripts = Create("ScrollingFrame", MainFrame, {Size = UDim2.new(1, -15, 1, -145), Position = UDim2.new(0, 8, 0, 75), BackgroundTransparency = 1, Visible = false, CanvasSize = UDim2.new(0, 0, 0, 510), ScrollBarThickness = 3})
 Create("UIGridLayout", PageScripts, {CellSize = UDim2.new(0, 96, 0, 52), CellPadding = UDim2.new(0, 5, 0, 6), HorizontalAlignment = Enum.HorizontalAlignment.Center})
 
--- PÁGINA 3: PAINEL TOOL
 local PageTools = Create("ScrollingFrame", MainFrame, {Size = UDim2.new(1, -16, 1, -145), Position = UDim2.new(0, 8, 0, 75), BackgroundTransparency = 1, Visible = false, CanvasSize = UDim2.new(0, 0, 0, 200), ScrollBarThickness = 0, ScrollingEnabled = false})
 Create("UIGridLayout", PageTools, {CellSize = UDim2.new(0, 64, 0, 72), CellPadding = UDim2.new(0, 4, 0, 8), HorizontalAlignment = Enum.HorizontalAlignment.Center})
 
--- Linha Branca de Divisão Inferior
 local WhiteBarSeparator = Create("Frame", MainFrame, {Name = "WhiteBarSeparator", Size = UDim2.new(1, -20, 0, 4), Position = UDim2.new(0.5, 0, 1, -78), AnchorPoint = Vector2.new(0.5, 0), BackgroundColor3 = Color3.fromRGB(255,255,255), BorderSizePixel = 0, Visible = false})
 
--- ============================================
--- RODAPÉ
--- ============================================
 local FooterBar = Create("Frame", MainFrame, {Size = UDim2.new(1, 0, 0, 65), Position = UDim2.new(0, 0, 1, -65), BackgroundColor3 = Color3.fromRGB(22,22,22), BorderSizePixel = 0})
 local CloseBtn = Create("TextButton", FooterBar, {Name = "CloseBtn", Size = UDim2.new(0, 160, 0, 42), Position = UDim2.new(0.5, -80, 0.5, -21), BackgroundColor3 = Color3.fromRGB(45,45,45), Text = "FECHAR UI", TextColor3 = Color3.fromRGB(255,255,255), TextSize = 22, Font = Enum.Font.Arcade})
 Create("UICorner", CloseBtn, {CornerRadius = UDim.new(0, 6)})
@@ -238,9 +112,6 @@ DiscordBtn.MouseButton1Click:Connect(function()
     loadstring(game:HttpGet("https://raw.githubusercontent.com/YuMAID369/Join-Discordv1/refs/heads/main/Discord%20Open"))()
 end)
 
--- ============================================
--- NAVEGAÇÃO
--- ============================================
 local currentPage = 1
 local function updateNavigation(page)
     currentPage = page
@@ -287,9 +158,56 @@ LeftBtn.MouseButton1Click:Connect(function()
     end 
 end)
 
--- ============================================
--- BANCO DE DADOS COM LINKS OFUSCADOS
--- ============================================
+local function X7()
+    local Y8 = {
+        ["GITHUB"] = "Function-fin",
+        ["github"] = "function-fin"
+    }
+    local Z9 = {}
+    function Z9:Z10(A)
+        if not A or type(A) ~= "string" then
+            return A
+        end
+        local B = A
+        for C, D in pairs(Y8) do
+            B = string.gsub(B, C, D)
+        end
+        return B
+    end
+    local E = {}
+    function Z9:Z11(A)
+        if E[A] then
+            return E[A]
+        end
+        local B = self:Z10(A)
+        E[A] = B
+        return B
+    end
+    function Z9:Z12(A)
+        local B = self:Z11(A)
+        if not B or not string.match(B, "^https?://") then
+            return false
+        end
+        local F, G = pcall(function()
+            return loadstring(game:HttpGet(B))()
+        end)
+        if not F then
+            E[A] = nil
+            local H = self:Z11(A)
+            if H ~= B then
+                loadstring(game:HttpGet(H))()
+                return true
+            end
+            return false
+        end
+        return true
+    end
+    return Z9
+end
+
+local I = X7()
+X7 = nil
+
 local ScriptData = {
     ["Terminal Join Server"] = "https://raw.githubusercontent.com/GITHUB/Terminal-Join-Server-SpwnCub-/refs/heads/main/SPWN%20Join",
     ["Sound ALL Beta"] = "https://raw.githubusercontent.com/GITHUB/Sound-ALL-Project/refs/heads/main/Sound%20ALL%20SpwnCub%20V1%20Teste%20Beta",
@@ -307,14 +225,14 @@ local ScriptData = {
     ["BAN HOUSE"] = "https://raw.githubusercontent.com/GITHUB/BAN-HOUSE-/refs/heads/main/BrookHaven",
     ["INSPECIONAR AVATAR"] = "https://raw.githubusercontent.com/GITHUB/INSPECT-AV2/refs/heads/main/idsAV2",
     ["FREEZE EMOTE"] = "https://raw.githubusercontent.com/GITHUB/FreezeEmote-/refs/heads/main/Universal%20Emote%20Lock",
-    ["EMOTES"] = "https://rawscripts.net/raw/Universal-Script-7yd7-I-Emote-Script-48024", -- Script de terceiros (não modificar)
+    ["EMOTES"] = "https://rawscripts.net/raw/Universal-Script-7yd7-I-Emote-Script-48024",
     ["SHADERS"] = "https://raw.githubusercontent.com/GITHUB/Shaders-V1/refs/heads/main/CUBNIT",
     ["MANOPLA V1"] = "https://raw.githubusercontent.com/GITHUB/MANOPLA-V2/refs/heads/main/HAND",
     ["INFINITY YIELD"] = "https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source",
     ["TP TOOL"] = "https://raw.githubusercontent.com/GITHUB/TP-TOOL-v1/refs/heads/main/TP%20Tool",
     ["TP POINT"] = "https://raw.githubusercontent.com/GITHUB/Teletransporte-/refs/heads/main/SpawnCUB",
     ["FREE CAM"] = "https://raw.githubusercontent.com/GITHUB/SpawnCam/refs/heads/main/Universal%20Cam",
-    ["CHAT MICKEY"] = "https://rawscripts.net/raw/Brookhaven-RP-Mickey-Chat-85762", -- Script de terceiros
+    ["CHAT MICKEY"] = "https://rawscripts.net/raw/Brookhaven-RP-Mickey-Chat-85762",
     ["TELEKINESIS"] = "https://raw.githubusercontent.com/GITHUB/TELEKINESIS-/refs/heads/main/Telekinesis%20Tool",
     ["FLING BALL V1"] = "https://raw.githubusercontent.com/GITHUB/Fling-Ball-Cubnit-V1/refs/heads/main/Kill%20Ball%20V1",
     ["SPEED EMOTE"] = "https://raw.githubusercontent.com/GITHUB/CubnitSpeedEmote/refs/heads/main/EmoteSpeed",
@@ -329,9 +247,6 @@ local ScriptData = {
     ["VIEW V2 VRP"] = "https://raw.githubusercontent.com/GITHUB/UI-View-V2-VPR/refs/heads/main/V2View%20VPR"
 }
 
--- ============================================
--- CRIAÇÃO DOS BOTÕES COM EXECUÇÃO OFUSCADA
--- ============================================
 for name, link in pairs(ScriptData) do
     local btn = Create("TextButton", PageScripts, {
         BackgroundColor3 = Color3.fromRGB(35,35,35), 
@@ -344,27 +259,56 @@ for name, link in pairs(ScriptData) do
         TextYAlignment = Enum.TextYAlignment.Center
     })
     Create("UICorner", btn, {CornerRadius = UDim.new(0, 4)})
-    
-    -- Captura o link para uso no clique
-    local scriptLink = link
+    local J = link
     btn.MouseButton1Click:Connect(function() 
         PlayClickSound()
-        
-        -- Verifica se é um script de terceiros (não modificar)
-        if string.find(scriptLink, "rawscripts.net") then
-            loadstring(game:HttpGet(scriptLink))()
+        if string.find(J, "rawscripts.net") then
+            loadstring(game:HttpGet(J))()
         else
-            -- Usa o sistema de ofuscação para processar o link
-   LinkProcessor:ExecuteScript(toolLink)
+            I:Z12(J)
+        end
+    end)
+end
+
+local ToolData = {
+    {name = "Fling Ball\nTool", link = "https://raw.githubusercontent.com/GITHUB/Fling-Ball-Cubnit-V1/refs/heads/main/Kill%20Ball%20V1"},
+    {name = "TOOL\nTELEKINESIS", link = "https://raw.githubusercontent.com/GITHUB/TELEKINESIS-/refs/heads/main/Telekinesis%20Tool"},
+    {name = "TP TOOL", link = "https://raw.githubusercontent.com/GITHUB/TP-TOOL-v1/refs/heads/main/TP%20Tool"},
+    {name = "FLING\nAll SELECT V1", link = "https://raw.githubusercontent.com/GITHUB/Atom-selector-/refs/heads/main/Target%20Kill"},
+    {name = "FLING\nAll SELECT V2", link = "https://raw.githubusercontent.com/GITHUB/SELECT-MATTER/refs/heads/main/SPWN%20KILL%20V2%20SELECT"},
+    {name = "SELECT\nMATTER TP", link = "https://raw.githubusercontent.com/GITHUB/ToolSpwnTp/refs/heads/main/SPWNTPtool"},
+    {name = "SELECT\nMATTER V3", link = "https://raw.githubusercontent.com/GITHUB/SELECT-MATTER-V3-/refs/heads/main/FLING%20V3%20TOOL%20SPWN"},
+    {name = "", link = ""},
+    {name = "", link = ""},
+    {name = "", link = ""},
+    {name = "", link = ""},
+    {name = "", link = ""},
+}
+
+for _, data in ipairs(ToolData) do
+    local toolBtn = Create("TextButton", PageTools, {
+        BackgroundColor3 = Color3.fromRGB(45, 45, 45),
+        Text = data.name,
+        TextColor3 = Color3.fromRGB(255, 255, 255),
+        TextSize = 16, 
+        Font = Enum.Font.LuckiestGuy, 
+        TextWrapped = true,
+        TextXAlignment = Enum.TextXAlignment.Center,
+        TextYAlignment = Enum.TextYAlignment.Center
+    })
+    Create("UICorner", toolBtn, {CornerRadius = UDim.new(0, 2)})
+
+    if data.link ~= "" then
+        local K = data.link
+        toolBtn.MouseButton1Click:Connect(function() 
+            PlayClickSound()
+            I:Z12(K)
         end)
     else
         toolBtn.AutoButtonColor = false
     end
 end
 
--- ============================================
--- LÓGICA DO BOTÃO OPEN
--- ============================================
 local lastClick = 0
 OpenBtn.MouseButton1Click:Connect(function()
     local currentTime = tick()
@@ -377,9 +321,6 @@ OpenBtn.MouseButton1Click:Connect(function()
     lastClick = currentTime
 end)
 
--- ============================================
--- EXECUTION/INTRO ANIMATION
--- ============================================
 task.spawn(function()
     task.wait(0.1)
     local infoE, infoB, infoI, infoD = TweenInfo.new(1.3, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out), TweenInfo.new(1.8, Enum.EasingStyle.Quint, Enum.EasingDirection.InOut), TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.In), TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
@@ -398,21 +339,4 @@ task.spawn(function()
 
     dissipate.Completed:Wait()
     IntroGui:Destroy()
-end)
-
--- ============================================
--- SISTEMA DE LIMPEZA (OPCIONAL)
--- ============================================
--- Remove referências desnecessárias para dificultar inspeção
-local function CleanUp()
-    -- Esconde a função Create do ambiente
-    if debug and debug.getinfo then
-        debug.getinfo = function() return nil end
-    end
-end
-
--- Executa limpeza após tudo estar carregado
-task.spawn(function()
-    task.wait(5)
-    CleanUp()
 end)
