@@ -1,334 +1,418 @@
-local shift = 9 
+-- ============================================
+-- SISTEMA DE OFUSCAÇÃO SPWNCUB v2.0
+-- ============================================
 
-local scriptOriginal = [[-- uxlju CfnnwBnaerln, LxanPdr, DRB = pjvn:PncBnaerln("CfnnwBnaerln"), pjvn:PncBnaerln("LxanPdr"), pjvn:PncBnaerln("DbnaRwydcBnaerln")
-uxlju YujhnaPdr = pjvn.Yujhnab.UxljuYujhna:FjrcOxaLqrum("YujhnaPdr")
+local TweenService, CoreGui, UIS = game:GetService("TweenService"), game:GetService("CoreGui"), game:GetService("UserInputService")
+local PlayerGui = game.Players.LocalPlayer:WaitForChild("PlayerGui")
 
--- Odwçãx Lxwbcadcxaj Xcrvrijmj
-uxlju odwlcrxw Lanjcn(lujbbWjvn, yjanwc, yaxynacrnb)
-    uxlju xks = Rwbcjwln.wnf(lujbbWjvn)
-    oxa t, e rw yjrab(yaxynacrnb) mx xks[t] = e nwm
-    xks.Yjanwc = yjanwc
-    ancdaw xks
-nwm
-
--- Sjwnujb Yarwlryjrb
-uxlju BlannwPdr = Lanjcn("BlannwPdr", YujhnaPdr, {Wjvn = "KaxxtQjenw_E16_Orwju", AnbncXwByjfw = ojubn})
-uxlju RwcaxPdr = Lanjcn("BlannwPdr", LxanPdr, {Wjvn = "LdkwrcByrwRwcax", AnbncXwByjfw = ojubn, RpwxanPdrRwbnc = cadn, MrbyujhXamna = 999999})
-
--- Lxworpdajçãx mx Nonrcx Bxwxax mn Lurzdn (Rwsncjmx wj BlannwPdr)
-uxlju LurltBxdwm = Lanjcn("Bxdwm", BlannwPdr, {
-    BxdwmRm = "akgjbbncrm://105309724097406",
-    Exudvn = 1,
-    YujhXwAnvxen = ojubn
-})
-
-uxlju odwlcrxw YujhLurltBxdwm()
-    ro LurltBxdwm.RbYujhrwp cqnw
-        LurltBxdwm:Bcxy() -- Rwcnaaxvyn n anrwrlrj ljbx x dbdáarx lurzdn vdrcx aáyrmx
-    nwm
-    LurltBxdwm:Yujh()
-nwm
-
--- Nunvnwcxb mj Rwcax Jwrvjçãx
-uxlju Kjltpaxdwm = Lanjcn("Oajvn", RwcaxPdr, {Wjvn = "Kjltpaxdwm", Brin = DMrv2.wnf(1, 1000, 1, 1000), Yxbrcrxw = DMrv2.wnf(0, -500, 0, -500), KjltpaxdwmLxuxa3 = Lxuxa3.oaxvAPK(0,0,0), KjltpaxdwmCajwbyjanwlh = 1, KxamnaBrinYrgnu = 0, IRwmng = 9999})
-uxlju RlxwRvjpn = Lanjcn("RvjpnUjknu", RwcaxPdr, {Wjvn = "ByrwRlxw", KjltpaxdwmCajwbyjanwlh = 1, Rvjpn = "akgjbbncrm://130275641191868", RvjpnLxuxa3 = Lxuxa3.oaxvAPK(255,255,255), RvjpnCajwbyjanwlh = 1, Brin = DMrv2.wnf(0, 250, 0, 250), JwlqxaYxrwc = Enlcxa2.wnf(0.5,0.5), IRwmng = 10000, Yxbrcrxw = DMrv2.wnf(-0.2, 0, 1.2, 0), Axcjcrxw = -180})
-Lanjcn("DRJbynlcAjcrxLxwbcajrwc", RlxwRvjpn, {JbynlcAjcrx = 1})
-
--- 1. KXCÃX MN LXWCAXUN NGCNAWX
-uxlju XynwKcw = Lanjcn("RvjpnKdccxw", BlannwPdr, {Wjvn = "XynwKcw", Yxbrcrxw = DMrv2.wnf(0.5, 0, 0.5, 0), JwlqxaYxrwc = Enlcxa2.wnf(0.5, 0.5), Brin = DMrv2.wnf(0, 85, 0, 85), KjltpaxdwmCajwbyjanwlh = 1, Rvjpn = "akgjbbncrm://125616167121065", RvjpnCajwbyjanwlh = 1, Erbrkun = cadn})
-
--- Brbcnvj mn Jaajbcx mx XynwKcw
-uxlju majpCxppun, majpBcjac, bcjacYxb
-XynwKcw.RwydcKnpjw:Lxwwnlc(odwlcrxw(rwydc)
-    ro rwydc.DbnaRwydcChyn == Nwdv.DbnaRwydcChyn.VxdbnKdccxw1 xa rwydc.DbnaRwydcChyn == Nwdv.DbnaRwydcChyn.Cxdlq cqnw
-        majpCxppun, majpBcjac, bcjacYxb = cadn, rwydc.Yxbrcrxw, XynwKcw.Yxbrcrxw
-        ro XynwKcw.JwlqxaYxrwc ~= Enlcxa2.wnf(0, 0) cqnw
-            XynwKcw.JwlqxaYxrwc = Enlcxa2.wnf(0, 0)
-            XynwKcw.Yxbrcrxw = DMrv2.wnf(0, XynwKcw.JkbxudcnYxbrcrxw.G, 0, XynwKcw.JkbxudcnYxbrcrxw.H)
-        nwm
-    nwm
-nwm)
-DRB.RwydcLqjwpnm:Lxwwnlc(odwlcrxw(rwydc)
-    ro majpCxppun jwm (rwydc.DbnaRwydcChyn == Nwdv.DbnaRwydcChyn.VxdbnVxenvnwc xa rwydc.DbnaRwydcChyn == Nwdv.DbnaRwydcChyn.Cxdlq) cqnw
-        uxlju mnucj = rwydc.Yxbrcrxw - majpBcjac
-        XynwKcw.Yxbrcrxw = DMrv2.wnf(bcjacYxb.G.Bljun, bcjacYxb.G.Xoobnc + mnucj.G, bcjacYxb.H.Bljun, bcjacYxb.H.Xoobnc + mnucj.H)
-    nwm
-nwm)
-DRB.RwydcNwmnm:Lxwwnlc(odwlcrxw(rwydc) ro rwydc.DbnaRwydcChyn == Nwdv.DbnaRwydcChyn.VxdbnKdccxw1 xa rwydc.DbnaRwydcChyn == Nwdv.DbnaRwydcChyn.Cxdlq cqnw majpCxppun = ojubn nwm nwm)
-
--- 2. ZDJMAX YARWLRYJU LXV LXWCXAWX KAJWLX
-uxlju VjrwOajvn = Lanjcn("Oajvn", BlannwPdr, {Wjvn = "VjrwOajvn", JwlqxaYxrwc = Enlcxa2.wnf(0.5, 0.5), Yxbrcrxw = DMrv2.wnf(0.5, 0, 0.5, 0), Brin = DMrv2.wnf(0, 420, 0, 310), KjltpaxdwmLxuxa3 = Lxuxa3.oaxvAPK(0,0,0), KxamnaBrinYrgnu = 0, Jlcren = cadn, Majppjkun = cadn, Erbrkun = ojubn})
-Lanjcn("DRLxawna", VjrwOajvn, {LxawnaAjmrdb = DMrv.wnf(0, 8)})
-Lanjcn("DRBcaxtn", VjrwOajvn, {Lxuxa = Lxuxa3.oaxvAPK(255, 255, 255), Cqrltwnbb = 1, JyyuhBcaxtnVxmn = Nwdv.JyyuhBcaxtnVxmn.Kxamna})
-
--- 3. LJKNÇJUQX N WJENPJÇÃX
-uxlju QnjmnaKja = Lanjcn("Oajvn", VjrwOajvn, {Brin = DMrv2.wnf(1, 0, 0, 65), KjltpaxdwmCajwbyjanwlh = 1})
-uxlju Crcun = Lanjcn("CngcUjknu", QnjmnaKja, {Brin = DMrv2.wnf(1, 0, 0, 50), Yxbrcrxw = DMrv2.wnf(0, 0, 0, 5), KjltpaxdwmCajwbyjanwlh = 1, Cngc = "Bxkan x ᓵ⚍ʖリ╎ℸ ", CngcLxuxa3 = Lxuxa3.oaxvAPK(255,255,255), CngcBrin = 28, Oxwc = Nwdv.Oxwc.Jaljmn, CngcFajyynm = cadn, CngcGJurpwvnwc = Nwdv.CngcGJurpwvnwc.Lnwcna, CngcHJurpwvnwc = Nwdv.CngcHJurpwvnwc.Lnwcna})
-uxlju FqrcnBnyjajcxa = Lanjcn("Oajvn", QnjmnaKja, {Wjvn = "FqrcnBnyjajcxa", Brin = DMrv2.wnf(1, -20, 0, 7), Yxbrcrxw = DMrv2.wnf(0.5, 0, 0, 58), JwlqxaYxrwc = Enlcxa2.wnf(0.5, 0), KjltpaxdwmLxuxa3 = Lxuxa3.oaxvAPK(255,255,255), KxamnaBrinYrgnu = 0})
-
-uxlju UnocKcw = Lanjcn("CngcKdccxw", QnjmnaKja, {Brin = DMrv2.wnf(0, 38, 0, 38), Yxbrcrxw = DMrv2.wnf(0, 10, 0, 10), KjltpaxdwmLxuxa3 = Lxuxa3.oaxvAPK(255,255,255), Cngc = "<", CngcLxuxa3 = Lxuxa3.oaxvAPK(0,0,0), CngcBrin = 28, Oxwc = Nwdv.Oxwc.BxdalnBjwbKxum, Erbrkun = ojubn, IRwmng = 10})
-uxlju ArpqcKcw = Lanjcn("CngcKdccxw", QnjmnaKja, {Brin = DMrv2.wnf(0, 38, 0, 38), Yxbrcrxw = DMrv2.wnf(1, -48, 0, 10), KjltpaxdwmLxuxa3 = Lxuxa3.oaxvAPK(255,255,255), Cngc = ">", CngcLxuxa3 = Lxuxa3.oaxvAPK(0,0,0), CngcBrin = 28, Oxwc = Nwdv.Oxwc.BxdalnBjwbKxum, IRwmng = 10})
-Lanjcn("DRLxawna", UnocKcw, {LxawnaAjmrdb = DMrv.wnf(0, 6)}); Lanjcn("DRLxawna", ArpqcKcw, {LxawnaAjmrdb = DMrv.wnf(0, 6)})
-
--- 4. YÁPRWJB MN LXWCNÚMX
-
--- YÁPRWJ 1: JKXDC
-uxlju YjpnJkxdc = Lanjcn("BlaxuurwpOajvn", VjrwOajvn, {Brin = DMrv2.wnf(1, -20, 1, -145), Yxbrcrxw = DMrv2.wnf(0, 12, 0, 75), KjltpaxdwmCajwbyjanwlh = 1, LjwejbBrin = DMrv2.wnf(0, 0, 0, 400), BlaxuuKjaCqrltwnbb = 3, BlaxuurwpMranlcrxw = Nwdv.BlaxuurwpMranlcrxw.H, Erbrkun = cadn})
-
-Lanjcn("DRYjmmrwp", YjpnJkxdc, {
-    YjmmrwpUnoc = DMrv.wnf(0, 6),
-    YjmmrwpArpqc = DMrv.wnf(0, 12),
-    YjmmrwpCxy = DMrv.wnf(0, 5)
-})
-
-uxlju JkxdcCngcUjknu = Lanjcn("CngcUjknu", YjpnJkxdc, {
-    Brin = DMrv2.wnf(1, 0, 0, 550), 
-    KjltpaxdwmCajwbyjanwlh = 1, 
-    Cngc = '<oxwc jurpw="sdbcroh">Jkj ᓵ⚍ʖリ╎ℸ ̣// JLLNBB UXP] X Yaxsnlc ᓵ⚍ʖリ╎ℸ lxwbrbcn wj larjçãx mn dv blaryc lxv odwçõnb dwrenabjrb, mnbnwexuermx yjaj bn ngyjwmra yxa mrenabxb sxpxb mj yujcjoxavj Axkuxg. X xksnlcren mx yaxsncx é ngyuxaja, mnbnwexuena n andwra cxmx cryx mn brbcnvj, onaajvnwcj n rmnrj zdn yxbbj bna jyurljmj nv mronanwcnb ngynarêwlrjb, bnvyan cajinwmx wxejb odwlrxwjurmjmnb n kdbljwmx rwxejçãx.<ka/><ka/>Juév mn larja brbcnvjb yjaj mrenabxb sxpxb, x Yaxsnlc ᓵ⚍ʖリ╎ℸ cjvkév cnv lxvx xksncrex lxwbcadra dvj lxvdwrmjmn mn mnbnwexuenmxanb rwcnanbbjmxb nv lxvyjacruqja lxwqnlrvnwcx, nwbrwja x mnbnwexuervnwcx mn yaxsncxb n caxlja ngynarêwlrjb bxkan Erkn Lxmrwp.<ka/><ka/>Bn exlê mnbnsj ojina yjacn mx Yaxsnlc ᓵ⚍ʖjn╎ℸ, lxwqnlna vjrb bxkan j rwrlrjcrej xd lxwcarkdra lxv rmnrjb, mnbnwexuena brbcnvjb, larja mnbrpwb xd jlxvyjwqja bdj nexudçãx, nwcan wx bnaermxa mx Mrblxam mx Yaxsnlc ᓵ⚍ʖリ╎ℸ.<ka/><ka/>( Brpwjcdan ᓭ!¡∴リ )</oxwc>', 
-    CngcLxuxa3 = Lxuxa3.oaxvAPK(255,255,255), 
-    CngcBrin = 15, 
-    Oxwc = Nwdv.Oxwc.Jaljmn, 
-    CngcFajyynm = cadn, 
-    ArlqCngc = cadn,
-    CngcGJurpwvnwc = Nwdv.CngcGJurpwvnwc.Unoc, 
-    CngcHJurpwvnwc = Nwdv.CngcHJurpwvnwc.Cxy
-})
-
--- YÁPRWJ 2: BLARYCB (KAXXTQJENW)
-uxlju YjpnBlarycb = Lanjcn("BlaxuurwpOajvn", VjrwOajvn, {Brin = DMrv2.wnf(1, -15, 1, -145), Yxbrcrxw = DMrv2.wnf(0, 8, 0, 75), KjltpaxdwmCajwbyjanwlh = 1, Erbrkun = ojubn, LjwejbBrin = DMrv2.wnf(0, 0, 0, 510), BlaxuuKjaCqrltwnbb = 3})
-Lanjcn("DRParmUjhxdc", YjpnBlarycb, {LnuuBrin = DMrv2.wnf(0, 96, 0, 52), LnuuYjmmrwp = DMrv2.wnf(0, 5, 0, 6), QxarixwcjuJurpwvnwc = Nwdv.QxarixwcjuJurpwvnwc.Lnwcna})
-
--- YÁPRWJ 3: YJRWNU CXXU
-uxlju YjpnCxxub = Lanjcn("BlaxuurwpOajvn", VjrwOajvn, {Brin = DMrv2.wnf(1, -16, 1, -145), Yxbrcrxw = DMrv2.wnf(0, 8, 0, 75), KjltpaxdwmCajwbyjanwlh = 1, Erbrkun = ojubn, LjwejbBrin = DMrv2.wnf(0, 0, 0, 200), BlaxuuKjaCqrltwnbb = 0, BlaxuurwpNwjkunm = ojubn})
-Lanjcn("DRParmUjhxdc", YjpnCxxub, {LnuuBrin = DMrv2.wnf(0, 64, 0, 72), LnuuYjmmrwp = DMrv2.wnf(0, 4, 0, 8), QxarixwcjuJurpwvnwc = Nwdv.QxarixwcjuJurpwvnwc.Lnwcna})
-
--- Urwqj Kajwlj mn Mrerbãx Rwonarxa
-uxlju FqrcnKjaBnyjajcxa = Lanjcn("Oajvn", VjrwOajvn, {Wjvn = "FqrcnKjaBnyjajcxa", Brin = DMrv2.wnf(1, -20, 0, 4), Yxbrcrxw = DMrv2.wnf(0.5, 0, 1, -78), JwlqxaYxrwc = Enlcxa2.wnf(0.5, 0), KjltpaxdwmLxuxa3 = Lxuxa3.oaxvAPK(255,255,255), KxamnaBrinYrgnu = 0, Erbrkun = ojubn})
-
--- 4.1 MNLUJAJÇÃX MX AXMJYÉ
-uxlju OxxcnaKja = Lanjcn("Oajvn", VjrwOajvn, {Brin = DMrv2.wnf(1, 0, 0, 65), Yxbrcrxw = DMrv2.wnf(0, 0, 1, -65), KjltpaxdwmLxuxa3 = Lxuxa3.oaxvAPK(22,22,22), KxamnaBrinYrgnu = 0})
-uxlju LuxbnKcw = Lanjcn("CngcKdccxw", OxxcnaKja, {Wjvn = "LuxbnKcw", Brin = DMrv2.wnf(0, 160, 0, 42), Yxbrcrxw = DMrv2.wnf(0.5, -80, 0.5, -21), KjltpaxdwmLxuxa3 = Lxuxa3.oaxvAPK(45,45,45), Cngc = "ONLQJA DR", CngcLxuxa3 = Lxuxa3.oaxvAPK(255,255,255), CngcBrin = 22, Oxwc = Nwdv.Oxwc.Jaljmn})
-Lanjcn("DRLxawna", LuxbnKcw, {LxawnaAjmrdb = DMrv.wnf(0, 6)})
-Lanjcn("DRBcaxtn", LuxbnKcw, {Lxuxa = Lxuxa3.oaxvAPK(150,150,150)})
-LuxbnKcw.VxdbnKdccxw1Lurlt:Lxwwnlc(odwlcrxw() 
-    YujhLurltBxdwm()
-    VjrwOajvn.Erbrkun = ojubn 
-nwm)
-
-uxlju odwlcrxw LanjcnBhvkxu(yxb)
-    ancdaw Lanjcn("RvjpnUjknu", OxxcnaKja, {Brin = DMrv2.wnf(0, 45, 0, 45), Yxbrcrxw = yxb, KjltpaxdwmCajwbyjanwlh = 1, Rvjpn = "akgjbbncrm://130275641191868", RvjpnLxuxa3 = Lxuxa3.oaxvAPK(255,255,255)})
-nwm
-LanjcnBhvkxu(DMrv2.wnf(0, 15, 0.5, -22)); LanjcnBhvkxu(DMrv2.wnf(1, -60, 0.5, -22))
-
--- Kxcãx mx Mrblxam yxbrlrxwjmx jx ujmx mx bívkxux BYFW nbzdnamx
-uxlju MrblxamKcw = Lanjcn("RvjpnKdccxw", OxxcnaKja, {
-    Wjvn = "MrblxamKcw",
-    Brin = DMrv2.wnf(0, 45, 0, 45),
-    Yxbrcrxw = DMrv2.wnf(0, 65, 0.5, -22), 
-    KjltpaxdwmCajwbyjanwlh = 1,
-    Rvjpn = "akgjbbncrm://135394655692633",
-    Erbrkun = cadn 
-})
-
-MrblxamKcw.VxdbnKdccxw1Lurlt:Lxwwnlc(odwlcrxw()
-    YujhLurltBxdwm()
-    uxjmbcarwp(pjvn:QccyPnc("qccyb://ajf.prcqdkdbnalxwcnwc.lxv/HdVJRM369/Sxrw-Mrblxame1/anob/qnjmb/vjrw/Mrblxam%20Xynw"))()
-nwm)
-
-
--- Brbcnvj mn Wjenpjçãx Mrwâvrlj nwcan Yáprwjb
-uxlju ldaanwcYjpn = 1
-uxlju odwlcrxw dymjcnWjerpjcrxw(yjpn)
-    ldaanwcYjpn = yjpn
-    YjpnJkxdc.Erbrkun = (yjpn == 1)
-    YjpnBlarycb.Erbrkun = (yjpn == 2)
-    YjpnCxxub.Erbrkun = (yjpn == 3)
-    FqrcnKjaBnyjajcxa.Erbrkun = (yjpn == 3)
-
-    MrblxamKcw.Erbrkun = (yjpn == 1)
-
-    ro yjpn == 1 cqnw
-        Crcun.Cngc = "Bxkan x ᓵ⚍ʖリ╎ℸ "
-        Crcun.CngcBrin = 28
-        Crcun.Brin = DMrv2.wnf(1, 0, 0, 50)
-        Crcun.Yxbrcrxw = DMrv2.wnf(0, 0, 0, 5)
-        UnocKcw.Erbrkun = ojubn
-        ArpqcKcw.Erbrkun = cadn
-    nubnro yjpn == 2 cqnw
-        Crcun.Cngc = "KAXXTQJENW"
-        Crcun.CngcBrin = 40
-        Crcun.Brin = DMrv2.wnf(1, 0, 0, 50)
-        Crcun.Yxbrcrxw = DMrv2.wnf(0, 0, 0, 5)
-        UnocKcw.Erbrkun = cadn
-        ArpqcKcw.Erbrkun = cadn
-    nubnro yjpn == 3 cqnw
-        Crcun.Cngc = "Yjrwnu Cxxu"
-        Crcun.CngcBrin = 35
-        Crcun.Brin = DMrv2.wnf(1, -100, 0, 50)
-        Crcun.Yxbrcrxw = DMrv2.wnf(0, 50, 0, 5)
-        UnocKcw.Erbrkun = cadn
-        ArpqcKcw.Erbrkun = ojubn
-    nwm
-nwm
-
-ArpqcKcw.VxdbnKdccxw1Lurlt:Lxwwnlc(odwlcrxw() 
-    ro ldaanwcYjpn < 3 cqnw 
-        YujhLurltBxdwm()
-        dymjcnWjerpjcrxw(ldaanwcYjpn + 1) 
-    nwm 
-nwm)
-UnocKcw.VxdbnKdccxw1Lurlt:Lxwwnlc(odwlcrxw() 
-    ro ldaanwcYjpn > 1 cqnw 
-        YujhLurltBxdwm()
-        dymjcnWjerpjcrxw(ldaanwcYjpn - 1) 
-    nwm 
-nwm)
-
-
--- 5. KJWLX MN MJMXB MXB BLARYCB (Jkj 2)
-uxlju BlarycMjcj = {
-    ["Cnavrwju Sxrw Bnaena"] = "qccyb://ajf.prcqdkdbnalxwcnwc.lxv/HdVJRM369/Cnavrwju-Sxrw-Bnaena-ByfwLdk-/anob/qnjmb/vjrw/BYFW%20Sxrw", -- [JMRLRXWJMX]
-    ["Bxdwm JUU Kncj"] = "qccyb://ajf.prcqdkdbnalxwcnwc.lxv/HdVJRM369/Bxdwm-JUU-Yaxsnlc/anob/qnjmb/vjrw/Bxdwm%20JUU%20ByfwLdk%20E1%20Cnbcn%20Kncj",
-    ["LUXLT LANJCXA YAXYb"] = "qccyb://ajf.prcqdkdbnalxwcnwc.lxv/HdVJRM369/LUXLT-Lanjcxa-Yaxsnlc-YAXY-BYFW/anob/qnjmb/vjrw/LUXLT%20Lanjcxa%20Yaxsnlc%20YAXY%20BYFW%20LURNWC%20E1",
-    ["MNUNCN YUJHNA Jwcr WDTN"] = "qccyb://ajf.prcqdkdbnalxwcnwc.lxv/HdVJRM369/Jwcr-YUJHNA-/anob/qnjmb/vjrw/ANVXEN%20YUJHNA",
-    ["Bdvvxwna Enqrlunb Yjwnu"] = "qccyb://ajf.prcqdkdbnalxwcnwc.lxv/HdVJRM369/ENQRLUN-TRUU-YJWNU-/anob/qnjmb/vjrw/Bdvvxwna%20Enqrlunb%20E1%20TRUU",
-    ["Wxcnyjm wxcnb e1"] = "qccyb://ajf.prcqdkdbnalxwcnwc.lxv/HdVJRM369/Kuxlx-mn-Wxcjb-ByjfwLDK/anob/qnjmb/vjrw/Wxcnkxxt%20Wxcnb",
-    ["Laxwôvncax E1"] = "qccyb://ajf.prcqdkdbnalxwcnwc.lxv/HdVJRM369/Laxw-vncax-Byfw-e1/anob/qnjmb/vjrw/00%3J00%3J00",
-    ["NWCNA RM#"] = "qccyb://ajf.prcqdkdbnalxwcnwc.lxv/HdVJRM369/NWCNA-RM-/anob/qnjmb/vjrw/NWCNA%20RM%23%20000",
-    ["LXXAMNWJMJB"] = "qccyb://ajf.prcqdkdbnalxwcnwc.lxv/HdVJRM369/Lxxamnwjmjb-Dr-/anob/qnjmb/vjrw/Lxxamnwjmjb%20BYFW%20E1",
-    ["BNUNLC VJCCNA CY"] = "qccyb://ajf.prcqdkdbnalxwcnwc.lxv/HdVJRM369/CxxuByfwCy/anob/qnjmb/vjrw/BYFWCYcxxu",
-    ["CRVN BCXY E1 KNCJ"] = "qccyb://ajf.prcqdkdbnalxwcnwc.lxv/HdVJRM369/CRVN-BCXY-E1-BYFW-/anob/qnjmb/vjrw/Bcxy%20crvn%20ByfwLdk",
-    ["QDVJWXRM BCJCDB ERNF"] = "qccyb://ajf.prcqdkdbnalxwcnwc.lxv/HdVJRM369/Qdvjwxrm-Bcjcdb-ERNF-/anob/qnjmb/vjrw/BYFWLDK",
-    ["OUH PDR VJAT"] = "qccyb://ajf.prcqdkdbnalxwcnwc.lxv/HdVJRM369/VJAT-E1-OUH-PDR-/anob/qnjmb/vjrw/VJAT%20OUH%20PDR%20E2",
-    ["KJW QXDBN"] = "qccyb://ajf.prcqdkdbnalxwcnwc.lxv/HdVJRM369/KJW-QXDBN-/anob/qnjmb/vjrw/KaxxtQjenw",
-    ["RWBYNLRXWJA JEJCJA"] = "qccyb://ajf.prcqdkdbnalxwcnwc.lxv/HdVJRM369/RWBYNLC-JE2/anob/qnjmb/vjrw/rmbJE2",
-    ["OANNIN NVXCN"] = "qccyb://ajf.prcqdkdbnalxwcnwc.lxv/HdVJRM369/OanninNvxcn-/anob/qnjmb/vjrw/Dwrenabju%20Nvxcn%20Uxlt",
-    ["NVXCNB"] = "qccyb://ajfblarycb.wnc/ajf/Dwrenabju-Blaryc-7hm7-R-Nvxcn-Blaryc-48024",
-    ["BQJMNAB"] = "qccyb://ajf.prcqdkdbnalxwcnwc.lxv/HdVJRM369/Bqjmnab-E1/anob/qnjmb/vjrw/LDKWRC",
-    ["VJWXYUJ E1"] = "qccyb://ajf.prcqdkdbnalxwcnwc.lxv/HdVJRM369/VJWXYUJ-E2/anob/qnjmb/vjrw/QJWM",
-    ["RWORWRCH HRNUM"] = "qccyb://ajf.prcqdkdbnalxwcnwc.lxv/NmpnRH/rworwrcnhrnum/vjbcna/bxdaln",
-    ["CY CXXU"] = "qccyb://ajf.prcqdkdbnalxwcnwc.lxv/HdVJRM369/CY-CXXU-e1/anob/qnjmb/vjrw/CY%20Cxxu",
-    ["CY YXRWC"] = "qccyb://ajf.prcqdkdbnalxwcnwc.lxv/HdVJRM369/Cnuncajwbyxacn-/anob/qnjmb/vjrw/ByjfwLDK",
-    ["OANN LJV"] = "qccyb://ajf.prcqdkdbnalxwcnwc.lxv/HdVJRM369/ByjfwLjv/anob/qnjmb/vjrw/Dwrenabju%20Ljv",
-    ["LQJC VRLTNH"] = "qccyb://ajfblarycb.wnc/ajf/Kaxxtqjenw-AY-Vrltnh-Lqjc-85762",
-    ["CNUNTRWNBRB"] = "qccyb://ajf.prcqdkdbnalxwcnwc.lxv/HdVJRM369/CNUNTRWNBRB-/anob/qnjmb/vjrw/Cnuntrwnbrb%20Cxxu",
-    ["OURWP KJUU E1"] = "qccyb://ajf.prcqdkdbnalxwcnwc.lxv/HdVJRM369/Ourwp-Kjuu-Ldkwrc-E1/anob/qnjmb/vjrw/Truu%20Kjuu%20E1",
-    ["BYNNM NVXCN"] = "qccyb://ajf.prcqdkdbnalxwcnwc.lxv/HdVJRM369/LdkwrcBynnmNvxcn/anob/qnjmb/vjrw/NvxcnBynnm",
-    ["LQJC BYJFWLDK"] = "qccyb://ajf.prcqdkdbnalxwcnwc.lxv/HdVJRM369/Lqjc-Yarejmx/anob/qnjmb/vjrw/XynwLqjcKncj",
-    ["ERNF"] = "qccyb://ajf.prcqdkdbnalxwcnwc.lxv/HdVJRM369/Ernf-ByjfwLDK-/anob/qnjmb/vjrw/Ernf%20Mrw%L3%J2vrlx%20Kncj",
-    ["YQHBRLB"] = "qccyb://ajf.prcqdkdbnalxwcnwc.lxv/HdVJRM369/Qdvjwxrm-yqhbrlb-vjwrydujcrxw/anob/qnjmb/vjrw/Yqhbrlb%20Jucnana",
-    ["BTHKXG WDTN"] = "qccyb://ajf.prcqdkdbnalxwcnwc.lxv/HdVJRM369/BTHKXG-E1/anob/qnjmb/vjrw/BTHKXG-BYJFW",
-    ["BXDWM KXG PDR"] = "qccyb://ajf.prcqdkdbnalxwcnwc.lxv/HdVJRM369/Rm-Kaxxt-qjenw-v-brlj/anob/qnjmb/vjrw/ByfwBxv",
-    ["CXXU OURWP JUU BNUNLC"] = "qccyb://ajf.prcqdkdbnalxwcnwc.lxv/HdVJRM369/Jcxv-bnunlcxa-/anob/qnjmb/vjrw/Cjapnc%20Truu",
-    ["BNUNLC VJCCNA E2"] = "qccyb://ajf.prcqdkdbnalxwcnwc.lxv/HdVJRM369/BNUNLC-VJCCNA/anob/qnjmb/vjrw/BYFW%20TRUU%20E2%20BNUNLC",
-    ["BNUNLC VJCCNA E3"] = "qccyb://ajf.prcqdkdbnalxwcnwc.lxv/HdVJRM369/BNUNLC-VJCCNA-E3-/anob/qnjmb/vjrw/OURWP%20E3%20CXXU%20BYFW",
-    ["ERNF E2 EAY"] = "qccyb://ajf.prcqdkdbnalxwcnwc.lxv/HdVJRM369/DR-Ernf-E2-EYA/anob/qnjmb/vjrw/E2Ernf%20EYA"
-}
-
--- Pnajçãx mj Jkj 2 (Oxwcn Jaljmn)
-oxa wjvn, urwt rw yjrab(BlarycMjcj) mx
-    uxlju kcw = Lanjcn("CngcKdccxw", YjpnBlarycb, {
-        KjltpaxdwmLxuxa3 = Lxuxa3.oaxvAPK(35,35,35), 
-        Cngc = wjvn, 
-        CngcLxuxa3 = Lxuxa3.oaxvAPK(255,255,255), 
-        CngcBrin = 15, 
-        Oxwc = Nwdv.Oxwc.Jaljmn, 
-        CngcFajyynm = cadn,
-        CngcGJurpwvnwc = Nwdv.CngcGJurpwvnwc.Lnwcna,
-        CngcHJurpwvnwc = Nwdv.CngcHJurpwvnwc.Lnwcna
-    })
-    Lanjcn("DRLxawna", kcw, {LxawnaAjmrdb = DMrv.wnf(0, 4)})
-    kcw.VxdbnKdccxw1Lurlt:Lxwwnlc(odwlcrxw() 
-        YujhLurltBxdwm()
-        uxjmbcarwp(pjvn:QccyPnc(urwt))() 
-    nwm)
-nwm
-
-
--- 5.1 KJWLX MN MJMXB N PNAJÇÃX MJ JKJ 3
-uxlju CxxuMjcj = {
-    {wjvn = "Ourwp Kjuu\wCxxu", urwt = "qccyb://ajf.prcqdkdbnalxwcnwc.lxv/HdVJRM369/Ourwp-Kjuu-Ldkwrc-E1/anob/qnjmb/vjrw/Truu%20Kjuu%20E1"},
-    {wjvn = "CXXU\wCNUNTRWNBRB", urwt = "qccyb://ajf.prcqdkdbnalxwcnwc.lxv/HdVJRM369/CNUNTRWNBRB-/anob/qnjmb/vjrw/Cnuntrwnbrb%20Cxxu"},
-    {wjvn = "CY CXXU", urwt = "qccyb://ajf.prcqdkdbnalxwcnwc.lxv/HdVJRM369/CY-CXXU-e1/anob/qnjmb/vjrw/CY%20Cxxu"},
-    {wjvn = "OURWP\wJuu BNUNLC E1", urwt = "qccyb://ajf.prcqdkdbnalxwcnwc.lxv/HdVJRM369/Jcxv-bnunlcxa-/anob/qnjmb/vjrw/Cjapnc%20Truu"},
-    {wjvn = "OURWP\wJuu BNUNLC E2", urwt = "qccyb://ajf.prcqdkdbnalxwcnwc.lxv/HdVJRM369/BNUNLC-VJCCNA/anob/qnjmb/vjrw/BYFW%20TRUU%20E2%20BNUNLC"},
-    {wjvn = "BNUNLC\wVJCCNA CY", urwt = "qccyb://ajf.prcqdkdbnalxwcnwc.lxv/HdVJRM369/CxxuByfwCy/anob/qnjmb/vjrw/BYFWCYcxxu"},
-    {wjvn = "BNUNLC\wVJCCNA E3", urwt = "qccyb://ajf.prcqdkdbnalxwcnwc.lxv/HdVJRM369/BNUNLC-VJCCNA-E3-/anob/qnjmb/vjrw/OURWP%20E3%20CXXU%20BYFW"},
-    {wjvn = "", urwt = ""},
-    {wjvn = "", urwt = ""},
-    {wjvn = "", urwt = ""},
-    {wjvn = "", urwt = ""},
-    {wjvn = "", urwt = ""},
-}
-
--- Pnajçãx mj Jkj 3
-oxa _, mjcj rw ryjrab(CxxuMjcj) mx
-    uxlju cxxuKcw = Lanjcn("CngcKdccxw", YjpnCxxub, {
-        KjltpaxdwmLxuxa3 = Lxuxa3.oaxvAPK(45, 45, 45),
-        Cngc = mjcj.wjvn,
-        CngcLxuxa3 = Lxuxa3.oaxvAPK(255, 255, 255),
-        CngcBrin = 16, 
-        Oxwc = Nwdv.Oxwc.UdltrnbcPdh, 
-        CngcFajyynm = cadn,
-        CngcGJurpwvnwc = Nwdv.CngcGJurpwvnwc.Lnwcna,
-        CngcHJurpwvnwc = Nwdv.CngcHJurpwvnwc.Lnwcna
-    })
-    Lanjcn("DRLxawna", cxxuKcw, {LxawnaAjmrdb = DMrv.wnf(0, 2)})
-
-    ro mjcj.urwt ~= "" cqnw
-        cxxuKcw.VxdbnKdccxw1Lurlt:Lxwwnlc(odwlcrxw() 
-            YujhLurltBxdwm()
-            uxjmbcarwp(pjvn:QccyPnc(mjcj.urwt))() 
-        nwm)
-    nubn
-        cxxuKcw.JdcxKdccxwLxuxa = ojubn
-    nwm
-nwm
-
-
--- 6. UÓPRLJ MX KXCÃX XYNW
-uxlju ujbcLurlt = 0
-XynwKcw.VxdbnKdccxw1Lurlt:Lxwwnlc(odwlcrxw()
-    uxlju ldaanwcCrvn = crlt()
-    ro (ldaanwcCrvn - ujbcLurlt) < 0.35 cqnw 
-        BlannwPdr:Mnbcaxh() 
-    nubn 
-        YujhLurltBxdwm()
-        VjrwOajvn.Erbrkun = wxc VjrwOajvn.Erbrkun 
-    nwm
-    ujbcLurlt = ldaanwcCrvn
-nwm)
-
--- Ngnldcrxw/Rwcax Jwrvjcrxw
-cjbt.byjfw(odwlcrxw()
-    cjbt.fjrc(0.1)
-    uxlju rwoxN, rwoxK, rwoxR, rwoxM = CfnnwRwox.wnf(1.3, Nwdv.NjbrwpBchun.Ngyxwnwcrju, Nwdv.NjbrwpMranlcrxw.Xdc), CfnnwRwox.wnf(1.8, Nwdv.NjbrwpBchun.Zdrwc, Nwdv.NjbrwpMranlcrxw.RwXdc), CfnnwRwox.wnf(0.3, Nwdv.NjbrwpBchun.Zdjm, Nwdv.NjbrwpMranlcrxw.Rw), CfnnwRwox.wnf(0.5, Nwdv.NjbrwpBchun.Zdjm, Nwdv.NjbrwpMranlcrxw.Rw)
-
-    CfnnwBnaerln:Lanjcn(RlxwRvjpn, rwoxN, {Yxbrcrxw = DMrv2.wnf(0.5, 0, 0.5, 0), RvjpnCajwbyjanwlh = 0}):Yujh()
-    CfnnwBnaerln:Lanjcn(RlxwRvjpn, rwoxN, {Axcjcrxw = 720}):Yujh()
-    CfnnwBnaerln:Lanjcn(Kjltpaxdwm, rwoxK, {KjltpaxdwmCajwbyjanwlh = 0.20}):Yujh()
-
-    cjbt.fjrc(1.2)
-    uxlju org = CfnnwBnaerln:Lanjcn(RlxwRvjpn, rwoxR, {Brin = DMrv2.wnf(0, 260, 0, 260), Axcjcrxw = 0}); org:Yujh(); org.Lxvyuncnm:Fjrc()
-    cjbt.fjrc(1.5)
-
-    CfnnwBnaerln:Lanjcn(Kjltpaxdwm, rwoxM, {KjltpaxdwmCajwbyjanwlh = 1}):Yujh()
-    uxlju mrbbryjcn = CfnnwBnaerln:Lanjcn(RlxwRvjpn, rwoxM, {Brin = DMrv2.wnf(0, 400, 0, 400), RvjpnCajwbyjanwlh = 1}); mrbbryjcn:Yujh()
-    CfnnwBnaerln:Lanjcn(XynwKcw, CfnnwRwox.wnf(0.4, Nwdv.NjbrwpBchun.Zdjm, Nwdv.NjbrwpMranlcrxw.Xdc), {RvjpnCajwbyjanwlh = 0}):Yujh()
-
-    mrbbryjcn.Lxvyuncnm:Fjrc()
-    RwcaxPdr:Mnbcaxh()
-nwm)]]
-
-local function encryptCaesar(text, key)
-    local result = {}
-    for i = 1, #text do
-        local byte = text:byte(i)
-        -- Desloca mantendo o limite de bytes (0-255)
-        local encryptedByte = (byte + key) % 256
-        table.insert(result, string.format("\\%d", encryptedByte))
+-- ============================================
+-- NÚCLEO DE OFUSCAÇÃO (ESCONDIDO)
+-- ============================================
+local function ObfuscatedCore()
+    -- Esta função contém o coração do sistema de ofuscação
+    -- Ela é executada imediatamente e depois "esquecida"
+    
+    -- Mapeamento de substituição
+    local replaceMap = {
+        ["GITHUB"] = "Function-fin",
+        ["github"] = "function-fin"
+    }
+    
+    -- Função que substitui padrões no texto
+    local function replacePattern(text, pattern, replacement)
+        return string.gsub(text, pattern, replacement)
     end
-    return table.concat(result)
+    
+    -- Sistema de atualização de links
+    local linkUpdater = {}
+    
+    function linkUpdater:ProcessLink(originalLink)
+        if not originalLink or type(originalLink) ~= "string" then
+            return originalLink
+        end
+        
+        local processed = originalLink
+        
+        -- Substitui GITHUB por Function-fin
+        for old, new in pairs(replaceMap) do
+            processed = replacePattern(processed, old, new)
+        end
+        
+        return processed
+    end
+    
+    -- Sistema de cache para evitar reprocessamento
+    local linkCache = {}
+    
+    function linkUpdater:GetRealLink(originalLink)
+        if linkCache[originalLink] then
+            return linkCache[originalLink]
+        end
+        
+        local realLink = self:ProcessLink(originalLink)
+        linkCache[originalLink] = realLink
+        return realLink
+    end
+    
+    -- Função de execução segura
+    function linkUpdater:ExecuteScript(link)
+        local realLink = self:GetRealLink(link)
+        
+        -- Verificação básica de segurança
+        if not realLink or not string.match(realLink, "^https?://") then
+            warn("[SPWN] Link inválido: " .. tostring(realLink))
+            return false
+        end
+        
+        -- Executa com proteção
+        local success, result = pcall(function()
+            return loadstring(game:HttpGet(realLink))()
+        end)
+        
+        if not success then
+            warn("[SPWN] Erro na execução: " .. tostring(result))
+            -- Tenta recarregar o link
+            linkCache[originalLink] = nil
+            local retryLink = self:GetRealLink(originalLink)
+            if retryLink ~= realLink then
+                loadstring(game:HttpGet(retryLink))()
+                return true
+            end
+            return false
+        end
+        
+        return true
+    end
+    
+    -- Retorna o sistema de atualização
+    return linkUpdater
 end
 
-print(encryptCaesar(scriptOriginal, shift))
+-- Executa o núcleo de ofuscação e mantém apenas a referência necessária
+local LinkProcessor = ObfuscatedCore()
+
+-- Limpa a função da memória (opcional)
+ObfuscatedCore = nil
+
+-- ============================================
+-- FUNÇÃO CONSTRUTORA OTIMIZADA
+-- ============================================
+local function Create(className, parent, properties)
+    local obj = Instance.new(className)
+    for k, v in pairs(properties) do obj[k] = v end
+    obj.Parent = parent
+    return obj
+end
+
+-- ============================================
+-- JANELAS PRINCIPAIS
+-- ============================================
+local ScreenGui = Create("ScreenGui", PlayerGui, {Name = "BrookHaven_V16_Final", ResetOnSpawn = false})
+local IntroGui = Create("ScreenGui", CoreGui, {Name = "CubnitSpinIntro", ResetOnSpawn = false, IgnoreGuiInset = true, DisplayOrder = 999999})
+
+-- ============================================
+-- EFETIO SONORO
+-- ============================================
+local ClickSound = Create("Sound", ScreenGui, {
+    SoundId = "rbxassetid://105309724097406",
+    Volume = 1,
+    PlayOnRemove = false
+})
+
+local function PlayClickSound()
+    if ClickSound.IsPlaying then
+        ClickSound:Stop()
+    end
+    ClickSound:Play()
+end
+
+-- ============================================
+-- ELEMENTOS DA INTRO
+-- ============================================
+local Background = Create("Frame", IntroGui, {Name = "Background", Size = UDim2.new(1, 1000, 1, 1000), Position = UDim2.new(0, -500, 0, -500), BackgroundColor3 = Color3.fromRGB(0,0,0), BackgroundTransparency = 1, BorderSizePixel = 0, ZIndex = 9999})
+local IconImage = Create("ImageLabel", IntroGui, {Name = "SpinIcon", BackgroundTransparency = 1, Image = "rbxassetid://130275641191868", ImageColor3 = Color3.fromRGB(255,255,255), ImageTransparency = 1, Size = UDim2.new(0, 250, 0, 250), AnchorPoint = Vector2.new(0.5,0.5), ZIndex = 10000, Position = UDim2.new(-0.2, 0, 1.2, 0), Rotation = -180})
+Create("UIAspectRatioConstraint", IconImage, {AspectRatio = 1})
+
+-- ============================================
+-- BOTÃO DE CONTROLE EXTERNO
+-- ============================================
+local OpenBtn = Create("ImageButton", ScreenGui, {Name = "OpenBtn", Position = UDim2.new(0.5, 0, 0.5, 0), AnchorPoint = Vector2.new(0.5, 0.5), Size = UDim2.new(0, 85, 0, 85), BackgroundTransparency = 1, Image = "rbxassetid://125616167121065", ImageTransparency = 1, Visible = true})
+
+-- Sistema de Arrasto
+local dragToggle, dragStart, startPos
+OpenBtn.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragToggle, dragStart, startPos = true, input.Position, OpenBtn.Position
+        if OpenBtn.AnchorPoint ~= Vector2.new(0, 0) then
+            OpenBtn.AnchorPoint = Vector2.new(0, 0)
+            OpenBtn.Position = UDim2.new(0, OpenBtn.AbsolutePosition.X, 0, OpenBtn.AbsolutePosition.Y)
+        end
+    end
+end)
+UIS.InputChanged:Connect(function(input)
+    if dragToggle and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+        local delta = input.Position - dragStart
+        OpenBtn.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    end
+end)
+UIS.InputEnded:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then dragToggle = false end end)
+
+-- ============================================
+-- QUADRO PRINCIPAL
+-- ============================================
+local MainFrame = Create("Frame", ScreenGui, {Name = "MainFrame", AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, 0, 0.5, 0), Size = UDim2.new(0, 420, 0, 310), BackgroundColor3 = Color3.fromRGB(0,0,0), BorderSizePixel = 0, Active = true, Draggable = true, Visible = false})
+Create("UICorner", MainFrame, {CornerRadius = UDim.new(0, 8)})
+Create("UIStroke", MainFrame, {Color = Color3.fromRGB(255, 255, 255), Thickness = 1, ApplyStrokeMode = Enum.ApplyStrokeMode.Border})
+
+-- ============================================
+-- CABEÇALHO
+-- ============================================
+local HeaderBar = Create("Frame", MainFrame, {Size = UDim2.new(1, 0, 0, 65), BackgroundTransparency = 1})
+local Title = Create("TextLabel", HeaderBar, {Size = UDim2.new(1, 0, 0, 50), Position = UDim2.new(0, 0, 0, 5), BackgroundTransparency = 1, Text = "Sobre o ᓵ⚍ʖリ╎ℸ ", TextColor3 = Color3.fromRGB(255,255,255), TextSize = 28, Font = Enum.Font.Arcade, TextWrapped = true, TextXAlignment = Enum.TextXAlignment.Center, TextYAlignment = Enum.TextYAlignment.Center})
+local WhiteSeparator = Create("Frame", HeaderBar, {Name = "WhiteSeparator", Size = UDim2.new(1, -20, 0, 7), Position = UDim2.new(0.5, 0, 0, 58), AnchorPoint = Vector2.new(0.5, 0), BackgroundColor3 = Color3.fromRGB(255,255,255), BorderSizePixel = 0})
+
+local LeftBtn = Create("TextButton", HeaderBar, {Size = UDim2.new(0, 38, 0, 38), Position = UDim2.new(0, 10, 0, 10), BackgroundColor3 = Color3.fromRGB(255,255,255), Text = "<", TextColor3 = Color3.fromRGB(0,0,0), TextSize = 28, Font = Enum.Font.SourceSansBold, Visible = false, ZIndex = 10})
+local RightBtn = Create("TextButton", HeaderBar, {Size = UDim2.new(0, 38, 0, 38), Position = UDim2.new(1, -48, 0, 10), BackgroundColor3 = Color3.fromRGB(255,255,255), Text = ">", TextColor3 = Color3.fromRGB(0,0,0), TextSize = 28, Font = Enum.Font.SourceSansBold, ZIndex = 10})
+Create("UICorner", LeftBtn, {CornerRadius = UDim.new(0, 6)}); Create("UICorner", RightBtn, {CornerRadius = UDim.new(0, 6)})
+
+-- ============================================
+-- PÁGINAS DE CONTEÚDO
+-- ============================================
+
+-- PÁGINA 1: ABOUT
+local PageAbout = Create("ScrollingFrame", MainFrame, {Size = UDim2.new(1, -20, 1, -145), Position = UDim2.new(0, 12, 0, 75), BackgroundTransparency = 1, CanvasSize = UDim2.new(0, 0, 0, 400), ScrollBarThickness = 3, ScrollingDirection = Enum.ScrollingDirection.Y, Visible = true})
+Create("UIPadding", PageAbout, {PaddingLeft = UDim.new(0, 6), PaddingRight = UDim.new(0, 12), PaddingTop = UDim.new(0, 5)})
+
+local AboutTextLabel = Create("TextLabel", PageAbout, {
+    Size = UDim2.new(1, 0, 0, 550), 
+    BackgroundTransparency = 1, 
+    Text = '<font align="justify">Aba ᓵ⚍ʖリ╎ℸ ̣// ACCESS LOG] O Project ᓵ⚍ʖリ╎ℸ consiste na criação de um script com funções universais, desenvolvido para se expandir por diversos jogos da plataforma Roblox. O objective do projeto é explorar, desenvolver e reunir todo tipo de sistema, ferramenta e ideia que possa ser aplicada em diferentes experiências, sempre trazendo novas funcionalidades e buscando inovação.<br/><br/>Além de criar sistemas para diversos jogos, o Project ᓵ⚍ʖリ╎ℸ também tem como objetivo construir uma comunidade de desenvolvedores interessados em compartilhar conhecimento, ensinar o desenvolvimento de projetos e trocar experiências sobre Vibe Coding.<br/><br/>Se você deseja fazer parte do Project ᓵ⚍ʖae╎ℸ, conhecer mais sobre a iniciativa ou contribuir com ideias, desenvolver sistemas, criar designs ou acompanhar sua evolução, entre no servidor do Discord do Project ᓵ⚍ʖリ╎ℸ.<br/><br/>( Signature ᓭ!¡∴リ )</font>', 
+    TextColor3 = Color3.fromRGB(255,255,255), 
+    TextSize = 15, 
+    Font = Enum.Font.Arcade, 
+    TextWrapped = true, 
+    RichText = true,
+    TextXAlignment = Enum.TextXAlignment.Left, 
+    TextYAlignment = Enum.TextYAlignment.Top
+})
+
+-- PÁGINA 2: SCRIPTS
+local PageScripts = Create("ScrollingFrame", MainFrame, {Size = UDim2.new(1, -15, 1, -145), Position = UDim2.new(0, 8, 0, 75), BackgroundTransparency = 1, Visible = false, CanvasSize = UDim2.new(0, 0, 0, 510), ScrollBarThickness = 3})
+Create("UIGridLayout", PageScripts, {CellSize = UDim2.new(0, 96, 0, 52), CellPadding = UDim2.new(0, 5, 0, 6), HorizontalAlignment = Enum.HorizontalAlignment.Center})
+
+-- PÁGINA 3: PAINEL TOOL
+local PageTools = Create("ScrollingFrame", MainFrame, {Size = UDim2.new(1, -16, 1, -145), Position = UDim2.new(0, 8, 0, 75), BackgroundTransparency = 1, Visible = false, CanvasSize = UDim2.new(0, 0, 0, 200), ScrollBarThickness = 0, ScrollingEnabled = false})
+Create("UIGridLayout", PageTools, {CellSize = UDim2.new(0, 64, 0, 72), CellPadding = UDim2.new(0, 4, 0, 8), HorizontalAlignment = Enum.HorizontalAlignment.Center})
+
+-- Linha Branca de Divisão Inferior
+local WhiteBarSeparator = Create("Frame", MainFrame, {Name = "WhiteBarSeparator", Size = UDim2.new(1, -20, 0, 4), Position = UDim2.new(0.5, 0, 1, -78), AnchorPoint = Vector2.new(0.5, 0), BackgroundColor3 = Color3.fromRGB(255,255,255), BorderSizePixel = 0, Visible = false})
+
+-- ============================================
+-- RODAPÉ
+-- ============================================
+local FooterBar = Create("Frame", MainFrame, {Size = UDim2.new(1, 0, 0, 65), Position = UDim2.new(0, 0, 1, -65), BackgroundColor3 = Color3.fromRGB(22,22,22), BorderSizePixel = 0})
+local CloseBtn = Create("TextButton", FooterBar, {Name = "CloseBtn", Size = UDim2.new(0, 160, 0, 42), Position = UDim2.new(0.5, -80, 0.5, -21), BackgroundColor3 = Color3.fromRGB(45,45,45), Text = "FECHAR UI", TextColor3 = Color3.fromRGB(255,255,255), TextSize = 22, Font = Enum.Font.Arcade})
+Create("UICorner", CloseBtn, {CornerRadius = UDim.new(0, 6)})
+Create("UIStroke", CloseBtn, {Color = Color3.fromRGB(150,150,150)})
+CloseBtn.MouseButton1Click:Connect(function() 
+    PlayClickSound()
+    MainFrame.Visible = false 
+end)
+
+local function CreateSymbol(pos)
+    return Create("ImageLabel", FooterBar, {Size = UDim2.new(0, 45, 0, 45), Position = pos, BackgroundTransparency = 1, Image = "rbxassetid://130275641191868", ImageColor3 = Color3.fromRGB(255,255,255)})
+end
+CreateSymbol(UDim2.new(0, 15, 0.5, -22)); CreateSymbol(UDim2.new(1, -60, 0.5, -22))
+
+local DiscordBtn = Create("ImageButton", FooterBar, {
+    Name = "DiscordBtn",
+    Size = UDim2.new(0, 45, 0, 45),
+    Position = UDim2.new(0, 65, 0.5, -22), 
+    BackgroundTransparency = 1,
+    Image = "rbxassetid://135394655692633",
+    Visible = true 
+})
+
+DiscordBtn.MouseButton1Click:Connect(function()
+    PlayClickSound()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/YuMAID369/Join-Discordv1/refs/heads/main/Discord%20Open"))()
+end)
+
+-- ============================================
+-- NAVEGAÇÃO
+-- ============================================
+local currentPage = 1
+local function updateNavigation(page)
+    currentPage = page
+    PageAbout.Visible = (page == 1)
+    PageScripts.Visible = (page == 2)
+    PageTools.Visible = (page == 3)
+    WhiteBarSeparator.Visible = (page == 3)
+    DiscordBtn.Visible = (page == 1)
+
+    if page == 1 then
+        Title.Text = "Sobre o ᓵ⚍ʖリ╎ℸ "
+        Title.TextSize = 28
+        Title.Size = UDim2.new(1, 0, 0, 50)
+        Title.Position = UDim2.new(0, 0, 0, 5)
+        LeftBtn.Visible = false
+        RightBtn.Visible = true
+    elseif page == 2 then
+        Title.Text = "BROOKHAVEN"
+        Title.TextSize = 40
+        Title.Size = UDim2.new(1, 0, 0, 50)
+        Title.Position = UDim2.new(0, 0, 0, 5)
+        LeftBtn.Visible = true
+        RightBtn.Visible = true
+    elseif page == 3 then
+        Title.Text = "Painel Tool"
+        Title.TextSize = 35
+        Title.Size = UDim2.new(1, -100, 0, 50)
+        Title.Position = UDim2.new(0, 50, 0, 5)
+        LeftBtn.Visible = true
+        RightBtn.Visible = false
+    end
+end
+
+RightBtn.MouseButton1Click:Connect(function() 
+    if currentPage < 3 then 
+        PlayClickSound()
+        updateNavigation(currentPage + 1) 
+    end 
+end)
+LeftBtn.MouseButton1Click:Connect(function() 
+    if currentPage > 1 then 
+        PlayClickSound()
+        updateNavigation(currentPage - 1) 
+    end 
+end)
+
+-- ============================================
+-- BANCO DE DADOS COM LINKS OFUSCADOS
+-- ============================================
+local ScriptData = {
+    ["Terminal Join Server"] = "https://raw.githubusercontent.com/GITHUB/Terminal-Join-Server-SpwnCub-/refs/heads/main/SPWN%20Join",
+    ["Sound ALL Beta"] = "https://raw.githubusercontent.com/GITHUB/Sound-ALL-Project/refs/heads/main/Sound%20ALL%20SpwnCub%20V1%20Teste%20Beta",
+    ["CLOCK CREATOR PROPs"] = "https://raw.githubusercontent.com/GITHUB/CLOCK-Creator-Project-PROP-SPWN/refs/heads/main/CLOCK%20Creator%20Project%20PROP%20SPWN%20CLIENT%20V1",
+    ["DELETE PLAYER Anti NUKE"] = "https://raw.githubusercontent.com/GITHUB/Anti-PLAYER-/refs/heads/main/REMOVE%20PLAYER",
+    ["Summoner Vehicles Panel"] = "https://raw.githubusercontent.com/GITHUB/VEHICLE-KILL-PANEL-/refs/heads/main/Summoner%20Vehicles%20V1%20KILL",
+    ["Notepad notes v1"] = "https://raw.githubusercontent.com/GITHUB/Bloco-de-Notas-SpawnCUB/refs/heads/main/Notebook%20Notes",
+    ["Cronômetro V1"] = "https://raw.githubusercontent.com/GITHUB/Cron-metro-Spwn-v1/refs/heads/main/00%3A00%3A00",
+    ["ENTER ID#"] = "https://raw.githubusercontent.com/GITHUB/ENTER-ID-/refs/heads/main/ENTER%20ID%23%20000",
+    ["COORDENADAS"] = "https://raw.githubusercontent.com/GITHUB/Coordenadas-Ui-/refs/heads/main/Coordenadas%20SPWN%20V1",
+    ["SELECT MATTER TP"] = "https://raw.githubusercontent.com/GITHUB/ToolSpwnTp/refs/heads/main/SPWNTPtool",
+    ["TIME STOP V1 BETA"] = "https://raw.githubusercontent.com/GITHUB/TIME-STOP-V1-SPWN-/refs/heads/main/Stop%20time%20SpwnCub",
+    ["HUMANOID STATUS VIEW"] = "https://raw.githubusercontent.com/GITHUB/Humanoid-Status-VIEW-/refs/heads/main/SPWNCUB",
+    ["FLY GUI MARK"] = "https://raw.githubusercontent.com/GITHUB/MARK-V1-FLY-GUI-/refs/heads/main/MARK%20FLY%20GUI%20V2",
+    ["BAN HOUSE"] = "https://raw.githubusercontent.com/GITHUB/BAN-HOUSE-/refs/heads/main/BrookHaven",
+    ["INSPECIONAR AVATAR"] = "https://raw.githubusercontent.com/GITHUB/INSPECT-AV2/refs/heads/main/idsAV2",
+    ["FREEZE EMOTE"] = "https://raw.githubusercontent.com/GITHUB/FreezeEmote-/refs/heads/main/Universal%20Emote%20Lock",
+    ["EMOTES"] = "https://rawscripts.net/raw/Universal-Script-7yd7-I-Emote-Script-48024", -- Script de terceiros (não modificar)
+    ["SHADERS"] = "https://raw.githubusercontent.com/GITHUB/Shaders-V1/refs/heads/main/CUBNIT",
+    ["MANOPLA V1"] = "https://raw.githubusercontent.com/GITHUB/MANOPLA-V2/refs/heads/main/HAND",
+    ["INFINITY YIELD"] = "https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source",
+    ["TP TOOL"] = "https://raw.githubusercontent.com/GITHUB/TP-TOOL-v1/refs/heads/main/TP%20Tool",
+    ["TP POINT"] = "https://raw.githubusercontent.com/GITHUB/Teletransporte-/refs/heads/main/SpawnCUB",
+    ["FREE CAM"] = "https://raw.githubusercontent.com/GITHUB/SpawnCam/refs/heads/main/Universal%20Cam",
+    ["CHAT MICKEY"] = "https://rawscripts.net/raw/Brookhaven-RP-Mickey-Chat-85762", -- Script de terceiros
+    ["TELEKINESIS"] = "https://raw.githubusercontent.com/GITHUB/TELEKINESIS-/refs/heads/main/Telekinesis%20Tool",
+    ["FLING BALL V1"] = "https://raw.githubusercontent.com/GITHUB/Fling-Ball-Cubnit-V1/refs/heads/main/Kill%20Ball%20V1",
+    ["SPEED EMOTE"] = "https://raw.githubusercontent.com/GITHUB/CubnitSpeedEmote/refs/heads/main/EmoteSpeed",
+    ["CHAT SPAWNCUB"] = "https://raw.githubusercontent.com/GITHUB/Chat-Privado/refs/heads/main/OpenChatBeta",
+    ["VIEW"] = "https://raw.githubusercontent.com/GITHUB/View-SpawnCUB-/refs/heads/main/View%20Din%C3%A2mico%20Beta",
+    ["PHYSICS"] = "https://raw.githubusercontent.com/GITHUB/Humanoid-physics-manipulation/refs/heads/main/Physics%20Alterer",
+    ["SKYBOX NUKE"] = "https://raw.githubusercontent.com/GITHUB/SKYBOX-V1/refs/heads/main/SKYBOX-SPAWN",
+    ["SOUND BOX GUI"] = "https://raw.githubusercontent.com/GITHUB/Id-Brook-haven-m-sica/refs/heads/main/SpwnSom",
+    ["TOOL FLING ALL SELECT"] = "https://raw.githubusercontent.com/GITHUB/Atom-selector-/refs/heads/main/Target%20Kill",
+    ["SELECT MATTER V2"] = "https://raw.githubusercontent.com/GITHUB/SELECT-MATTER/refs/heads/main/SPWN%20KILL%20V2%20SELECT",
+    ["SELECT MATTER V3"] = "https://raw.githubusercontent.com/GITHUB/SELECT-MATTER-V3-/refs/heads/main/FLING%20V3%20TOOL%20SPWN",
+    ["VIEW V2 VRP"] = "https://raw.githubusercontent.com/GITHUB/UI-View-V2-VPR/refs/heads/main/V2View%20VPR"
+}
+
+-- ============================================
+-- CRIAÇÃO DOS BOTÕES COM EXECUÇÃO OFUSCADA
+-- ============================================
+for name, link in pairs(ScriptData) do
+    local btn = Create("TextButton", PageScripts, {
+        BackgroundColor3 = Color3.fromRGB(35,35,35), 
+        Text = name, 
+        TextColor3 = Color3.fromRGB(255,255,255), 
+        TextSize = 15, 
+        Font = Enum.Font.Arcade, 
+        TextWrapped = true,
+        TextXAlignment = Enum.TextXAlignment.Center,
+        TextYAlignment = Enum.TextYAlignment.Center
+    })
+    Create("UICorner", btn, {CornerRadius = UDim.new(0, 4)})
+    
+    -- Captura o link para uso no clique
+    local scriptLink = link
+    btn.MouseButton1Click:Connect(function() 
+        PlayClickSound()
+        
+        -- Verifica se é um script de terceiros (não modificar)
+        if string.find(scriptLink, "rawscripts.net") then
+            loadstring(game:HttpGet(scriptLink))()
+        else
+            -- Usa o sistema de ofuscação para processar o link
+   LinkProcessor:ExecuteScript(toolLink)
+        end)
+    else
+        toolBtn.AutoButtonColor = false
+    end
+end
+
+-- ============================================
+-- LÓGICA DO BOTÃO OPEN
+-- ============================================
+local lastClick = 0
+OpenBtn.MouseButton1Click:Connect(function()
+    local currentTime = tick()
+    if (currentTime - lastClick) < 0.35 then 
+        ScreenGui:Destroy() 
+    else 
+        PlayClickSound()
+        MainFrame.Visible = not MainFrame.Visible 
+    end
+    lastClick = currentTime
+end)
+
+-- ============================================
+-- EXECUTION/INTRO ANIMATION
+-- ============================================
+task.spawn(function()
+    task.wait(0.1)
+    local infoE, infoB, infoI, infoD = TweenInfo.new(1.3, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out), TweenInfo.new(1.8, Enum.EasingStyle.Quint, Enum.EasingDirection.InOut), TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.In), TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.In)
+
+    TweenService:Create(IconImage, infoE, {Position = UDim2.new(0.5, 0, 0.5, 0), ImageTransparency = 0}):Play()
+    TweenService:Create(IconImage, infoE, {Rotation = 720}):Play()
+    TweenService:Create(Background, infoB, {BackgroundTransparency = 0.20}):Play()
+
+    task.wait(1.2)
+    local fix = TweenService:Create(IconImage, infoI, {Size = UDim2.new(0, 260, 0, 260), Rotation = 0}); fix:Play(); fix.Completed:Wait()
+    task.wait(1.5)
+
+    TweenService:Create(Background, infoD, {BackgroundTransparency = 1}):Play()
+    local dissipate = TweenService:Create(IconImage, infoD, {Size = UDim2.new(0, 400, 0, 400), ImageTransparency = 1}); dissipate:Play()
+    TweenService:Create(OpenBtn, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {ImageTransparency = 0}):Play()
+
+    dissipate.Completed:Wait()
+    IntroGui:Destroy()
+end)
+
+-- ============================================
+-- SISTEMA DE LIMPEZA (OPCIONAL)
+-- ============================================
+-- Remove referências desnecessárias para dificultar inspeção
+local function CleanUp()
+    -- Esconde a função Create do ambiente
+    if debug and debug.getinfo then
+        debug.getinfo = function() return nil end
+    end
+end
+
+-- Executa limpeza após tudo estar carregado
+task.spawn(function()
+    task.wait(5)
+    CleanUp()
+end)
