@@ -1,14 +1,12 @@
 local HttpService = game:GetService("HttpService")
 local TeleportService = game:GetService("TeleportService")
 local UIS = game:GetService("UserInputService")
-local lp = game:GetService("Players").LocalPlayer
+local Players = game:GetService("Players")
+local lp = Players.LocalPlayer
 
 local Clipboard = setclipboard or toclipboard or set_clipboard
 local serverFrames = {}
 local isRefreshing = false
-local currentServerId = game.JobId
-local filterMode = "all"
-local searchTerm = ""
 
 local oldGui = lp.PlayerGui:FindFirstChild("TerminalServerGui")
 if oldGui then oldGui:Destroy() end
@@ -38,19 +36,21 @@ local ScreenGui = Create("ScreenGui", lp.PlayerGui, {
     ResetOnSpawn = false 
 })
 
+-- Botão externo aumentado (65x65)
 local OpenBtn = Create("ImageButton", ScreenGui, {
     Name = "ExternalToggleButton",
-    Size = UDim2.new(0, 52, 0, 52),
+    Size = UDim2.new(0, 65, 0, 65),
     Position = UDim2.new(0, 10, 0.4, 0),
     BackgroundTransparency = 1,
     Image = ID_OPEN_EXT,
     ZIndex = 50
 })
 
+-- Frame principal aumentado (420x310)
 local MainFrame = Create("Frame", ScreenGui, {
     Name = "MainFrame",
-    Size = UDim2.new(0, 380, 0, 320),
-    Position = UDim2.new(0.5, -190, 0.5, -160),
+    Size = UDim2.new(0, 420, 0, 310),
+    Position = UDim2.new(0.5, -210, 0.5, -155),
     BackgroundColor3 = Color3.fromRGB(10, 10, 10),
     BorderSizePixel = 0,
     ClipsDescendants = true,
@@ -59,7 +59,7 @@ local MainFrame = Create("Frame", ScreenGui, {
 
 Create("ImageLabel", MainFrame, {
     Name = "BgSpawnSymbol",
-    Size = UDim2.new(0, 200, 0, 200),
+    Size = UDim2.new(0, 220, 0, 220),
     AnchorPoint = Vector2.new(0.5, 0.5),
     Position = UDim2.new(0.5, 0, 0.5, 0),
     BackgroundTransparency = 1,
@@ -70,7 +70,7 @@ Create("ImageLabel", MainFrame, {
 })
 
 local TitleBar = Create("Frame", MainFrame, { 
-    Size = UDim2.new(1, 0, 0, 32), 
+    Size = UDim2.new(1, 0, 0, 34), 
     BackgroundTransparency = 1, 
     ZIndex = 10 
 })
@@ -95,15 +95,14 @@ Create("ImageButton", TitleBar, {
     ZIndex = 10
 })
 
-local TitleText = Create("TextLabel", TitleBar, {
-    Name = "Title",
-    Size = UDim2.new(1, -150, 1, 0), 
+Create("TextLabel", TitleBar, {
+    Size = UDim2.new(1, -100, 1, 0), 
     Position = UDim2.new(0, 58, 0, 0), 
     BackgroundTransparency = 1,
     Font = Enum.Font.Arcade, 
     Text = "JOIN SPWNCUB", 
     TextColor3 = Color3.fromRGB(255, 255, 255),
-    TextSize = 13, 
+    TextSize = 16, 
     ZIndex = 10
 })
 
@@ -118,67 +117,9 @@ Create("ImageButton", TitleBar, {
     ScreenGui:Destroy()
 end)
 
--- Barra de Pesquisa
-local SearchContainer = Create("Frame", MainFrame, {
-    Name = "SearchContainer",
-    Size = UDim2.new(1, -14, 0, 30),
-    Position = UDim2.new(0, 7, 0, 35),
-    BackgroundTransparency = 1,
-    ZIndex = 11
-})
-
-local SearchBox = Create("TextBox", SearchContainer, {
-    Name = "SearchBox",
-    Size = UDim2.new(1, -34, 1, 0),
-    BackgroundColor3 = Color3.fromRGB(25, 25, 25),
-    Font = Enum.Font.Arcade,
-    PlaceholderText = "🔍 PESQUISAR (ID, players, vagas)...",
-    PlaceholderColor3 = Color3.fromRGB(120, 120, 120),
-    Text = "",
-    TextColor3 = Color3.fromRGB(255, 255, 255),
-    TextSize = 10,
-    ZIndex = 12,
-    ClearTextOnFocus = false
-}, 8, { Color = Color3.fromRGB(100, 100, 100), Thickness = 1 })
-
-local FilterBtn = Create("TextButton", SearchContainer, {
-    Name = "FilterBtn",
-    Size = UDim2.new(0, 28, 0, 28),
-    Position = UDim2.new(1, -28, 0, 1),
-    BackgroundColor3 = Color3.fromRGB(40, 40, 40),
-    Font = Enum.Font.Arcade,
-    Text = "⚡",
-    TextColor3 = Color3.fromRGB(255, 255, 255),
-    TextSize = 14,
-    ZIndex = 13
-}, 6, { Color = Color3.fromRGB(100, 100, 100), Thickness = 1 })
-
--- Botão para ir ao servidor atual
-local CurrentServerBtn = Create("TextButton", TitleBar, {
-    Name = "CurrentServerBtn",
-    Size = UDim2.new(0, 20, 0, 20),
-    Position = UDim2.new(0, 170, 0.5, -10),
-    BackgroundTransparency = 1,
-    Font = Enum.Font.Arcade,
-    Text = "📍",
-    TextColor3 = Color3.fromRGB(0, 255, 100),
-    TextSize = 16,
-    ZIndex = 10
-})
-
-CurrentServerBtn.MouseButton1Click:Connect(function()
-    for _, frame in ipairs(serverFrames) do
-        if frame:GetAttribute("IsCurrentServer") then
-            local yPos = (frame.LayoutOrder - 1) * 92
-            ScrollContainer.CanvasPosition = Vector2.new(0, yPos)
-            break
-        end
-    end
-end)
-
 Create("Frame", MainFrame, {
     Size = UDim2.new(1, 0, 0, 1), 
-    Position = UDim2.new(0, 0, 0, 32),
+    Position = UDim2.new(0, 0, 0, 34),
     BackgroundColor3 = Color3.fromRGB(60, 60, 60), 
     BorderSizePixel = 0, 
     ZIndex = 10
@@ -186,18 +127,19 @@ Create("Frame", MainFrame, {
 
 local ScrollContainer = Create("ScrollingFrame", MainFrame, {
     Name = "ServerList", 
-    Size = UDim2.new(1, -7, 1, -71), 
-    Position = UDim2.new(0, 3.5, 0, 70),
+    Size = UDim2.new(1, -8, 1, -39), 
+    Position = UDim2.new(0, 4, 0, 36),
     BackgroundTransparency = 1, 
     BorderSizePixel = 0, 
     CanvasSize = UDim2.new(0, 0, 0, 0),
-    ScrollBarThickness = 3, 
+    ScrollBarThickness = 4, 
     ScrollBarImageColor3 = Color3.fromRGB(150, 150, 150), 
     ZIndex = 5
 })
 
 Create("UIListLayout", ScrollContainer, { 
-    SortOrder = Enum.SortOrder.LayoutOrder 
+    SortOrder = Enum.SortOrder.LayoutOrder,
+    Padding = UDim.new(0, 4)
 })
 
 local MiniPopUp = Create("Frame", MainFrame, {
@@ -319,62 +261,23 @@ local JoinLinkBtn = Create("TextButton", MiniPopUp, {
 }, nil, { Color = Color3.fromRGB(80, 80, 80), Thickness = 1 })
 
 function CreateServerSlot(server, index)
+    local isCurrentServer = (server.id == game.JobId)
+
+    -- Se for o servidor atual, adiciona a caixa em volta (destaque)
+    local strokeData = isCurrentServer and { Color = Color3.fromRGB(255, 255, 255), Thickness = 1.5 } or nil
+
     local Slot = Create("Frame", ScrollContainer, {
-        Size = UDim2.new(1, 0, 0, 87), 
+        Size = UDim2.new(1, -6, 0, 87), 
         BackgroundTransparency = 1, 
         ZIndex = 5,
         LayoutOrder = index
-    })
+    }, nil, strokeData)
 
     local playing = server.playing or 0
-    local maxPlayers = server.maxPlayers or 6
-    local ping = server.ping or math.random(20, 150)
-    local fps = ping > 0 and math.min(math.floor(1000 / ping), 60) or 0
+    local maxPlayers = server.maxPlayers or 28
+    local ping = server.ping or math.random(10, 35)
+    local fps = ping > 0 and math.min(math.floor(1000 / ping), 60) or 60
     local serverId = server.id or "N/A"
-    
-    -- Destaque do servidor atual
-    local isCurrentServer = (serverId == currentServerId)
-    Slot:SetAttribute("IsCurrentServer", isCurrentServer)
-    
-    if isCurrentServer then
-        -- Fundo destacado
-        local highlightBg = Create("Frame", Slot, {
-            Name = "CurrentHighlight",
-            Size = UDim2.new(1, 0, 1, 0),
-            BackgroundColor3 = Color3.fromRGB(0, 100, 0),
-            BackgroundTransparency = 0.75,
-            BorderSizePixel = 0,
-            ZIndex = 4
-        }, 8)
-        
-        -- Badge "VOCÊ ESTÁ AQUI"
-        local badge = Create("TextLabel", Slot, {
-            Name = "CurrentBadge",
-            Size = UDim2.new(0, 110, 0, 18),
-            Position = UDim2.new(0, 9, 0, 2),
-            BackgroundColor3 = Color3.fromRGB(0, 255, 100),
-            BackgroundTransparency = 0.2,
-            Font = Enum.Font.Arcade,
-            Text = "⭐ VOCÊ ESTÁ AQUI",
-            TextColor3 = Color3.fromRGB(255, 255, 255),
-            TextSize = 9,
-            ZIndex = 7
-        }, 6, { Color = Color3.fromRGB(0, 255, 100), Thickness = 1 })
-        
-        -- Animação sutil de pulso
-        task.spawn(function()
-            while badge and badge.Parent do
-                for i = 1, 10 do
-                    badge.BackgroundTransparency = 0.2 + (i * 0.05)
-                    task.wait(0.05)
-                end
-                for i = 10, 1, -1 do
-                    badge.BackgroundTransparency = 0.2 + (i * 0.05)
-                    task.wait(0.05)
-                end
-            end
-        end)
-    end
 
     local pingColor
     if ping < 60 then
@@ -385,24 +288,18 @@ function CreateServerSlot(server, index)
         pingColor = Color3.fromRGB(255, 80, 80)
     end
 
-    local vacancies = maxPlayers - playing
-    local fillPercent = playing / math.max(maxPlayers, 1)
-    local fillColor
-    if fillPercent >= 0.9 then
-        fillColor = Color3.fromRGB(255, 50, 50)
-    elseif fillPercent >= 0.7 then
-        fillColor = Color3.fromRGB(255, 200, 50)
-    else
-        fillColor = Color3.fromRGB(50, 255, 100)
+    local pingTextHeader = string.format("PING : %dms", ping)
+    if isCurrentServer then
+        pingTextHeader = string.format("PING : %dms My server", ping)
     end
 
     local infoText = string.format(
-        "PING : %dms\nFPS : %d\nPLAYERS : %d/%d\nGAME ID : %d\nID : %s",
-        ping, fps, playing, maxPlayers, game.PlaceId, serverId
+        "%s\nFPS : %d\nPLAYERS : %d/%d\nGAME ID : %d\nID : %s",
+        pingTextHeader, fps, playing, maxPlayers, game.PlaceId, serverId
     )
 
     local InfoLabel = Create("TextLabel", Slot, {
-        Size = UDim2.new(0.55, 0, 1, 0), 
+        Size = UDim2.new(0.65, 0, 1, 0), 
         Position = UDim2.new(0, 9, 0, 0), 
         BackgroundTransparency = 1,
         Font = Enum.Font.Arcade, 
@@ -419,60 +316,21 @@ function CreateServerSlot(server, index)
         table.insert(lines, line)
     end
     if #lines >= 1 then
-        lines[1] = string.format('<font color="rgb(%d,%d,%d)">PING : %dms</font>', 
-            pingColor.R * 255, pingColor.G * 255, pingColor.B * 255, ping)
+        if isCurrentServer then
+            lines[1] = string.format('<font color="rgb(%d,%d,%d)">PING : %dms</font> <font color="rgb(0,255,100)">My server</font>', 
+                pingColor.R * 255, pingColor.G * 255, pingColor.B * 255, ping)
+        else
+            lines[1] = string.format('<font color="rgb(%d,%d,%d)">PING : %dms</font>', 
+                pingColor.R * 255, pingColor.G * 255, pingColor.B * 255, ping)
+        end
         InfoLabel.Text = table.concat(lines, "\n")
         InfoLabel.RichText = true
     end
 
-    -- Barra de progresso de lotação
-    local fillBarBg = Create("Frame", Slot, {
-        Size = UDim2.new(0, 60, 0, 4),
-        Position = UDim2.new(1, -70, 0, 80),
-        BackgroundColor3 = Color3.fromRGB(60, 60, 60),
-        BorderSizePixel = 0,
-        ZIndex = 6
-    }, 2)
-
-    Create("Frame", fillBarBg, {
-        Size = UDim2.new(fillPercent, 0, 1, 0),
-        BackgroundColor3 = fillColor,
-        BorderSizePixel = 0,
-        ZIndex = 7
-    }, 2)
-
-    -- Texto de vagas
-    local vacanciesText = Create("TextLabel", Slot, {
-        Size = UDim2.new(0, 60, 0, 12),
-        Position = UDim2.new(1, -70, 0, 66),
-        BackgroundTransparency = 1,
-        Font = Enum.Font.Arcade,
-        Text = vacancies > 0 and string.format("%d vagas", vacancies) or "LOTADO",
-        TextColor3 = fillColor,
-        TextSize = 8,
-        ZIndex = 6
-    })
-
-    -- Badge especial para servidores quase cheios
-    if vacancies <= 5 and vacancies > 0 then
-        local hotBadge = Create("TextLabel", Slot, {
-            Size = UDim2.new(0, 40, 0, 12),
-            Position = UDim2.new(0.55, 10, 0, 68),
-            BackgroundColor3 = Color3.fromRGB(255, 100, 50),
-            BackgroundTransparency = 0.3,
-            Font = Enum.Font.Arcade,
-            Text = "🔥",
-            TextColor3 = Color3.fromRGB(255, 255, 255),
-            TextSize = 8,
-            ZIndex = 7
-        }, 4)
-    end
-
-    -- Botão JOIN
     local JoinButton = Create("TextButton", Slot, {
         Name = "JoinButton", 
-        Size = UDim2.new(0, 78, 0, 25), 
-        Position = UDim2.new(1, -88, 0, 11),
+        Size = UDim2.new(0, 85, 0, 25), 
+        Position = UDim2.new(1, -95, 0, 11),
         BackgroundColor3 = Color3.fromRGB(0, 0, 0), 
         Font = Enum.Font.Arcade, 
         Text = "JOIN",
@@ -487,11 +345,10 @@ function CreateServerSlot(server, index)
         end)
     end)
 
-    -- Botão COPY
     local CopyButton = Create("TextButton", Slot, {
         Name = "CopyButton", 
-        Size = UDim2.new(0, 78, 0, 25), 
-        Position = UDim2.new(1, -88, 0, 46),
+        Size = UDim2.new(0, 85, 0, 25), 
+        Position = UDim2.new(1, -95, 0, 46),
         BackgroundColor3 = Color3.fromRGB(0, 0, 0), 
         Font = Enum.Font.Arcade, 
         Text = "COPY",
@@ -506,13 +363,15 @@ function CreateServerSlot(server, index)
         end
     end)
 
-    Create("Frame", Slot, {
-        Size = UDim2.new(1, -16, 0, 1), 
-        Position = UDim2.new(0, 8, 1, -1),
-        BackgroundColor3 = Color3.fromRGB(40, 40, 40), 
-        BorderSizePixel = 0, 
-        ZIndex = 6
-    })
+    if not isCurrentServer then
+        Create("Frame", Slot, {
+            Size = UDim2.new(1, -16, 0, 1), 
+            Position = UDim2.new(0, 8, 1, -1),
+            BackgroundColor3 = Color3.fromRGB(40, 40, 40), 
+            BorderSizePixel = 0, 
+            ZIndex = 6
+        })
+    end
 
     table.insert(serverFrames, Slot)
     return Slot
@@ -520,6 +379,7 @@ end
 
 function GetAllServers(placeId)
     local servers = {}
+    local currentServerFound = false
 
     pcall(function()
         local url = "https://games.roblox.com/v1/games/" .. placeId .. "/servers/Public?sortOrder=Asc&limit=100"
@@ -527,6 +387,9 @@ function GetAllServers(placeId)
 
         if data and data.data then
             for _, server in ipairs(data.data) do
+                if server.id == game.JobId then
+                    currentServerFound = true
+                end
                 table.insert(servers, server)
             end
         end
@@ -537,6 +400,9 @@ function GetAllServers(placeId)
             local nextData = HttpService:JSONDecode(game:HttpGet(nextUrl))
             if nextData and nextData.data then
                 for _, server in ipairs(nextData.data) do
+                    if server.id == game.JobId then
+                        currentServerFound = true
+                    end
                     table.insert(servers, server)
                 end
             end
@@ -544,43 +410,17 @@ function GetAllServers(placeId)
         end
     end)
 
-    return servers
-end
-
-function FilterServers(servers)
-    local filtered = {}
-    
-    for _, server in ipairs(servers) do
-        local playing = server.playing or 0
-        local maxPlayers = server.maxPlayers or 6
-        local vacancies = maxPlayers - playing
-        local serverId = server.id or ""
-        local ping = server.ping or 999
-        
-        local passesFilter = true
-        
-        if filterMode == "almostFull" then
-            passesFilter = (vacancies <= 5 and vacancies > 0)
-        elseif filterMode == "lowPing" then
-            passesFilter = (ping < 80)
-        end
-        
-        if searchTerm ~= "" and passesFilter then
-            local term = searchTerm:lower()
-            passesFilter = (
-                serverId:lower():find(term) or
-                tostring(playing):find(term) or
-                ("vagas"):find(term) and vacancies > 0 or
-                ("lotado"):find(term) and vacancies == 0
-            )
-        end
-        
-        if passesFilter then
-            table.insert(filtered, server)
-        end
+    -- Garantir que o servidor atual apareça mesmo que a API passe batido
+    if not currentServerFound then
+        table.insert(servers, 1, {
+            id = game.JobId,
+            playing = #Players:GetPlayers(),
+            maxPlayers = 28,
+            ping = 13
+        })
     end
-    
-    return filtered
+
+    return servers
 end
 
 function UpdateServerList(servers)
@@ -589,48 +429,36 @@ function UpdateServerList(servers)
     end
     serverFrames = {}
 
-    local filteredServers = FilterServers(servers)
-    
-    if #filteredServers == 0 then
+    if #servers == 0 then
         ScrollContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
-        TitleText.Text = "JOIN SPWNCUB [0/" .. #servers .. "]"
-        
-        -- Mensagem quando não encontra resultados
-        Create("TextLabel", ScrollContainer, {
-            Size = UDim2.new(1, 0, 0, 40),
-            BackgroundTransparency = 1,
-            Font = Enum.Font.Arcade,
-            Text = "Nenhum servidor encontrado",
-            TextColor3 = Color3.fromRGB(150, 150, 150),
-            TextSize = 12,
-            ZIndex = 5
-        })
         return
     end
 
-    table.sort(filteredServers, function(a, b)
+    -- Ordenar colocando o servidor atual obrigatoriamente no TOPO (index 1)
+    table.sort(servers, function(a, b)
+        if a.id == game.JobId then return true end
+        if b.id == game.JobId then return false end
         return (a.ping or 999) < (b.ping or 999)
     end)
 
-    if #filteredServers > 50 then
-        for i = #filteredServers, 51, -1 do
-            table.remove(filteredServers, i)
+    if #servers > 50 then
+        for i = #servers, 51, -1 do
+            if servers[i].id ~= game.JobId then
+                table.remove(servers, i)
+            end
         end
     end
 
-    for i, server in ipairs(filteredServers) do
+    for i, server in ipairs(servers) do
         CreateServerSlot(server, i)
     end
 
     ScrollContainer.CanvasSize = UDim2.new(0, 0, 0, #serverFrames * 92)
-    TitleText.Text = "JOIN SPWNCUB [" .. #filteredServers .. "/" .. #servers .. "]"
 end
 
 function RefreshServers()
     if isRefreshing then return end
     isRefreshing = true
-    
-    TitleText.Text = "JOIN SPWNCUB [CARREGANDO...]"
 
     task.spawn(function()
         UpdateServerList(GetAllServers(game.PlaceId))
@@ -684,41 +512,8 @@ makeDraggable(OpenBtn)
 
 OpenBtn.MouseButton1Click:Connect(function()
     MainFrame.Visible = not MainFrame.Visible
-    if MainFrame.Visible then
-        RefreshServers()
-    end
 end)
 
--- Eventos da barra de pesquisa
-SearchBox:GetPropertyChangedSignal("Text"):Connect(function()
-    searchTerm = SearchBox.Text:lower()
-    RefreshServers()
-end)
-
--- Botão de filtro rápido
-local filterModes = {"all", "almostFull", "lowPing"}
-local filterIcons = {"⚡", "🔥", "📶"}
-local filterNames = {"TODOS", "QUASE CHEIO", "PING BAIXO"}
-
-FilterBtn.MouseButton1Click:Connect(function()
-    local currentIndex = table.find(filterModes, filterMode) or 1
-    currentIndex = currentIndex % #filterModes + 1
-    filterMode = filterModes[currentIndex]
-    FilterBtn.Text = filterIcons[currentIndex]
-    RefreshServers()
-end)
-
--- Tooltip do botão de filtro
-FilterBtn.MouseEnter:Connect(function()
-    local currentIndex = table.find(filterModes, filterMode) or 1
-    TitleText.Text = "FILTRO: " .. filterNames[currentIndex]
-end)
-
-FilterBtn.MouseLeave:Connect(function()
-    RefreshServers()
-end)
-
--- Eventos do MiniPopUp
 local openMiniBtn = TitleBar:FindFirstChild("OpenIdInputBtn")
 if openMiniBtn then
     openMiniBtn.MouseButton1Click:Connect(function()
@@ -743,14 +538,14 @@ JoinLinkBtn.MouseButton1Click:Connect(function()
             end)
             MiniPopUp.Visible = false
         else
-            MiniTextBox.Text = "ID inválido!"
+            MiniTextBox.Text = "ID inválido! Use apenas a chave."
             MiniTextBox.TextColor3 = Color3.fromRGB(255, 50, 50)
             task.wait(2)
             MiniTextBox.Text = ""
             MiniTextBox.TextColor3 = Color3.fromRGB(0, 0, 0)
         end
     else
-        MiniTextBox.Text = "Digite um ID!"
+        MiniTextBox.Text = "Digite um ID válido!"
         MiniTextBox.TextColor3 = Color3.fromRGB(255, 50, 50)
         task.wait(1.5)
         MiniTextBox.Text = ""
@@ -771,5 +566,4 @@ UIS.InputBegan:Connect(function(input, gameProcessed)
     end
 end)
 
--- Inicialização
 RefreshServers()
