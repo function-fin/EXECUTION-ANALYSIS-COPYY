@@ -79,7 +79,7 @@ local function clonarSkinBrookhaven(skinData)
     local character = LP.Character or LP.CharacterAdded:Wait()
     local humanoid = character:WaitForChild("Humanoid")
     local tentacles, maxTentativas = 0, 2
-
+    
     repeat
         tentacles = tentacles + 1
         local success, appliedDescription = pcall(function() return humanoid:GetAppliedDescription() end)
@@ -107,11 +107,11 @@ local function clonarSkinBrookhaven(skinData)
             if partId and tonumber(partId) ~= 0 and tonumber(partId) ~= 4843936835 then pcall(function() wearRemote:InvokeServer(tonumber(partId)) end) task.wait(0.9) end
         end
     end
-
+    
     if skinData.Shirt and tonumber(skinData.Shirt) ~= 0 then pcall(function() wearRemote:InvokeServer(tonumber(skinData.Shirt)) end) task.wait(0.9) end
     if skinData.Pants and tonumber(skinData.Pants) ~= 0 then pcall(function() wearRemote:InvokeServer(tonumber(skinData.Pants)) end) task.wait(0.9) end
     if skinData.Face and tonumber(skinData.Face) ~= 0 then pcall(function() wearRemote:InvokeServer(tonumber(skinData.Face)) end) task.wait(0.9) end
-
+    
     if skinData.Accessories then
         for _, accId in ipairs(skinData.Accessories) do
             if tonumber(accId) ~= 0 then pcall(function() wearRemote:InvokeServer(tonumber(accId)) end) task.wait(0.9) end
@@ -130,26 +130,25 @@ end
 
 local function createCard(id, defName, isAnimation)
     if not id or tostring(id) == "0" or id == "" then return end
-
+    
     local card = create("TextButton", gridScroll, { BackgroundColor3 = isAnimation and Color3.fromRGB(20, 15, 30) or Color3.fromRGB(15, 15, 15), Text = "", ZIndex = 104 }, 6)
     create("UIStroke", card, { Color = isAnimation and Color3.fromRGB(230, 110, 20) or Color3.fromRGB(40, 40, 40), Thickness = 1 })
-
+    
     local imgLabel = create("ImageLabel", card, { Size = UDim2.new(1, -10, 0, 65), Position = UDim2.new(0, 5, 0, 5), BackgroundTransparency = 1, Image = "rbxthumb://type=Asset&id=" .. id .. "&w=150&h=150", ZIndex = 105 })
     local label = create("TextLabel", card, { Size = UDim2.new(1, -6, 0, 35), Position = UDim2.new(0, 3, 1, -45), Text = "...", TextColor3 = Color3.fromRGB(200, 200, 200), TextSize = 8, Font = Enum.Font.Gotham, TextWrapped = true, BackgroundTransparency = 1, ZIndex = 105 })
-
+    
     task.spawn(function()
         local s, info = pcall(Marketplace.GetProductInfo, Marketplace, id)
         if s and info and info.Name then
             label.Text = info.Name
         else
             label.Text = defName
-            -- Fallback visual para Animações Anômalas/Cruas que não possuem Thumbnail pública
             if isAnimation then
-                imgLabel.Image = "rbxassetid://10723362115" 
+                imgLabel.Image = "rbxassetid://10723362115"
             end
         end
     end)
-
+    
     card.MouseButton1Click:Connect(function() currentId = id cMsg.Text = "COPIAR ID DO: " .. defName:upper() confirmGui.Visible = true end)
 end
 
@@ -159,11 +158,11 @@ local function displayAvatarData(name, data)
     title.Text, currentInspectedName, currentInspectedData = "INSPECIONANDO: " .. name:upper(), name, data
     updateVisibility()
     for _, v in pairs(gridScroll:GetChildren()) do if v:IsA("TextButton") then v:Destroy() end end
-
+    
     createCard(data.Shirt, "Camisa") createCard(data.Pants, "Calça") createCard(data.Face, "Rosto")
     for part, id in pairs(data.BodyParts or {}) do createCard(id, part) end
     for _, accId in ipairs(data.Accessories or {}) do createCard(accId, "Acessório") end
-
+    
     if data.Animations then
         for animName, animId in pairs(data.Animations) do
             createCard(animId, "Anim: " .. animName, true)
@@ -173,7 +172,6 @@ end
 
 local function clearList() for _, v in pairs(listPage:GetChildren()) do if v:IsA("Frame") or v:IsA("TextButton") then v:Destroy() end end end
 
--- Função auxiliar para varrer o Animator e capturar IDs anômalos
 local function getPlayerAnimations(player, description)
     local anims = {
         Idle = description and description.IdleAnimation,
@@ -188,7 +186,6 @@ local function getPlayerAnimations(player, description)
     local char = player.Character
     if not char then return anims end
 
-    -- 1. Varredura via Animator (Captura Animações em Execução / Anomalias)
     local hum = char:FindFirstChildOfClass("Humanoid")
     local animator = hum and hum:FindFirstChildOfClass("Animator")
     if animator then
@@ -202,7 +199,6 @@ local function getPlayerAnimations(player, description)
         end
     end
 
-    -- 2. Varredura no Script Animate (Captura Idle Customizado alterado manualmente)
     local animateScript = char:FindFirstChild("Animate")
     if animateScript then
         for _, child in ipairs(animateScript:GetChildren()) do
