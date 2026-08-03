@@ -1,560 +1,374 @@
-local HttpService = game:GetService("HttpService")
-local TeleportService = game:GetService("TeleportService")
-local UIS = game:GetService("UserInputService")
-local Players = game:GetService("Players")
-local lp = Players.LocalPlayer
+-- [[ CUBNIT OMNI - DATABASE & CLIPBOARD v33.8 (ANOMALY ANIMATIONS FIX) ]] --
+local Players, Marketplace, UserInputService, HttpService, ReplicatedStorage = game:GetService("Players"), game:GetService("MarketplaceService"), game:GetService("UserInputService"), game:GetService("HttpService"), game:GetService("ReplicatedStorage")
+local LP, PG = Players.LocalPlayer, Players.LocalPlayer:WaitForChild("PlayerGui")
+local FILE_NAME, remotesFolder = "CubnitOmni_SavedAvatars.json", ReplicatedStorage:WaitForChild("Remotes", 5)
+local wearRemote = remotesFolder and remotesFolder:FindFirstChild("Wear")
 
-local Clipboard = setclipboard or toclipboard or set_clipboard
-local serverFrames = {}
-local isRefreshing = false
-
-local oldGui = lp.PlayerGui:FindFirstChild("TerminalServerGui")
-if oldGui then oldGui:Destroy() end
-
-local function Create(className, parent, properties, corner, stroke)
-    local obj = Instance.new(className)
-    for k, v in pairs(properties) do obj[k] = v end
-    if corner then 
-        Instance.new("UICorner", obj).CornerRadius = UDim.new(0, corner)
-    end
-    if stroke then
-        local str = Instance.new("UIStroke", obj)
-        for k, v in pairs(stroke) do str[k] = v end
-    end
-    if parent then obj.Parent = parent end
-    return obj
+local function create(className, parent, props, cornerRadius)
+    local inst = Instance.new(className)
+    for k, v in pairs(props or {}) do inst[k] = v end
+    if cornerRadius then Instance.new("UICorner", inst).CornerRadius = UDim.new(0, cornerRadius) end
+    inst.Parent = parent return inst
 end
 
-local ID_BACK = "rbxassetid://107874661558482"
-local ID_CLOSE_X = "rbxassetid://98235327129327"
-local ID_SUN = "rbxassetid://85337967115080"
-local ID_OPEN_EXT = "rbxassetid://125206663850588"
-local ID_OPEN_MINI = "rbxassetid://135311906628500"
-
-local ScreenGui = Create("ScreenGui", lp.PlayerGui, { 
-    Name = "TerminalServerGui", 
-    ResetOnSpawn = false 
-})
-
-local OpenBtn = Create("ImageButton", ScreenGui, {
-    Name = "ExternalToggleButton",
-    Size = UDim2.new(0, 65, 0, 65),
-    Position = UDim2.new(0, 10, 0.4, 0),
-    BackgroundTransparency = 1,
-    Image = ID_OPEN_EXT,
-    ZIndex = 50
-})
-
-local MainFrame = Create("Frame", ScreenGui, {
-    Name = "MainFrame",
-    Size = UDim2.new(0, 420, 0, 310),
-    Position = UDim2.new(0.5, -210, 0.5, -155),
-    BackgroundColor3 = Color3.fromRGB(10, 10, 10),
-    BorderSizePixel = 0,
-    ClipsDescendants = true,
-    Visible = true
-}, nil, { Color = Color3.fromRGB(255, 255, 255), Thickness = 1.5 })
-
-Create("ImageLabel", MainFrame, {
-    Name = "BgSpawnSymbol",
-    Size = UDim2.new(0, 220, 0, 220),
-    AnchorPoint = Vector2.new(0.5, 0.5),
-    Position = UDim2.new(0.5, 0, 0.5, 0),
-    BackgroundTransparency = 1,
-    Image = ID_SUN,
-    ImageColor3 = Color3.fromRGB(120, 120, 120),
-    ImageTransparency = 0.65,
-    ZIndex = 1
-})
-
-local TitleBar = Create("Frame", MainFrame, { 
-    Size = UDim2.new(1, 0, 0, 34), 
-    BackgroundTransparency = 1, 
-    ZIndex = 10 
-})
-
-Create("ImageButton", TitleBar, {
-    Name = "BackButton", 
-    Size = UDim2.new(0, 23, 0, 23), 
-    Position = UDim2.new(0, 7, 0.5, -11),
-    BackgroundTransparency = 1, 
-    Image = ID_BACK, 
-    ZIndex = 10
-}).MouseButton1Click:Connect(function()
-    RefreshServers()
-end)
-
-Create("ImageButton", TitleBar, {
-    Name = "OpenIdInputBtn", 
-    Size = UDim2.new(0, 23, 0, 23), 
-    Position = UDim2.new(0, 34, 0.5, -11),
-    BackgroundTransparency = 1, 
-    Image = ID_OPEN_MINI, 
-    ZIndex = 10
-})
-
-Create("TextLabel", TitleBar, {
-    Size = UDim2.new(1, -100, 1, 0), 
-    Position = UDim2.new(0, 58, 0, 0), 
-    BackgroundTransparency = 1,
-    Font = Enum.Font.Arcade, 
-    Text = "JOIN SPWNCUB", 
-    TextColor3 = Color3.fromRGB(255, 255, 255),
-    TextSize = 16, 
-    ZIndex = 10
-})
-
-Create("ImageButton", TitleBar, {
-    Name = "CloseButton", 
-    Size = UDim2.new(0, 23, 0, 23), 
-    Position = UDim2.new(1, -30, 0.5, -11),
-    BackgroundTransparency = 1, 
-    Image = ID_CLOSE_X, 
-    ZIndex = 10
-}).MouseButton1Click:Connect(function()
-    ScreenGui:Destroy()
-end)
-
-Create("Frame", MainFrame, {
-    Size = UDim2.new(1, 0, 0, 1), 
-    Position = UDim2.new(0, 0, 0, 34),
-    BackgroundColor3 = Color3.fromRGB(60, 60, 60), 
-    BorderSizePixel = 0, 
-    ZIndex = 10
-})
-
-local ScrollContainer = Create("ScrollingFrame", MainFrame, {
-    Name = "ServerList", 
-    Size = UDim2.new(1, -8, 1, -39), 
-    Position = UDim2.new(0, 4, 0, 36),
-    BackgroundTransparency = 1, 
-    BorderSizePixel = 0, 
-    CanvasSize = UDim2.new(0, 0, 0, 0),
-    ScrollBarThickness = 4, 
-    ScrollBarImageColor3 = Color3.fromRGB(150, 150, 150), 
-    ZIndex = 5
-})
-
-Create("UIListLayout", ScrollContainer, { 
-    SortOrder = Enum.SortOrder.LayoutOrder,
-    Padding = UDim.new(0, 4)
-})
-
-local MiniPopUp = Create("Frame", MainFrame, {
-    Name = "MiniPopUp", 
-    Size = UDim2.new(0, 310, 0, 150), 
-    Position = UDim2.new(0.5, -155, 0.5, -75),
-    BackgroundColor3 = Color3.fromRGB(15, 15, 15), 
-    BorderSizePixel = 0, 
-    ZIndex = 30, 
-    Visible = false
-}, nil, { Color = Color3.fromRGB(255, 255, 255), Thickness = 1.5 })
-
-Create("ImageButton", MiniPopUp, {
-    Name = "MiniCloseBtn", 
-    Size = UDim2.new(0, 21, 0, 21), 
-    Position = UDim2.new(1, -27, 0, 6),
-    BackgroundTransparency = 1, 
-    Image = ID_CLOSE_X, 
-    ZIndex = 32
-}).MouseButton1Click:Connect(function()
-    MiniPopUp.Visible = false
-end)
-
-Create("TextLabel", MiniPopUp, {
-    Size = UDim2.new(1, -40, 0, 32), 
-    Position = UDim2.new(0, 9, 0, 7), 
-    BackgroundTransparency = 1,
-    Font = Enum.Font.Arcade, 
-    Text = "Cole o ID abaixo:",
-    TextColor3 = Color3.fromRGB(255, 255, 255), 
-    TextSize = 13, 
-    ZIndex = 31,
-    TextXAlignment = Enum.TextXAlignment.Left
-})
-
-local InputPill = Create("Frame", MiniPopUp, {
-    Size = UDim2.new(0.9, 0, 0, 30),
-    Position = UDim2.new(0.05, 0, 0, 46),
-    BackgroundColor3 = Color3.fromRGB(255, 255, 255), 
-    BorderSizePixel = 0, 
-    ZIndex = 31
-}, 12)
-
-local textScrollFrame = Create("ScrollingFrame", InputPill, {
-    Size = UDim2.new(1, -16, 1, -4),
-    Position = UDim2.new(0, 8, 0, 2),
-    BackgroundTransparency = 1,
-    BorderSizePixel = 0,
-    ScrollBarThickness = 2,
-    ScrollBarImageColor3 = Color3.fromRGB(100, 100, 100),
-    ScrollBarImageTransparency = 0.5,
-    ZIndex = 32,
-    ClipsDescendants = true,
-    HorizontalScrollBarInset = Enum.ScrollBarInset.ScrollBar,
-    VerticalScrollBarInset = Enum.ScrollBarInset.ScrollBar
-})
-
-local MiniTextBox = Create("TextBox", textScrollFrame, {
-    Size = UDim2.new(1, 0, 1, 0),
-    Position = UDim2.new(0, 0, 0, 0),
-    BackgroundTransparency = 1,
-    Font = Enum.Font.SourceSans,
-    Text = "",
-    PlaceholderText = "Cole apenas a chave: 4b74e345...",
-    PlaceholderColor3 = Color3.fromRGB(150, 150, 150),
-    TextColor3 = Color3.fromRGB(0, 0, 0),
-    TextSize = 13,
-    ZIndex = 33,
-    TextXAlignment = Enum.TextXAlignment.Left,
-    TextYAlignment = Enum.TextYAlignment.Center,
-    ClearTextOnFocus = false
-})
-
-local function updateTextScroll()
-    local textLength = #MiniTextBox.Text
-    local charWidth = 7.5
-    local textWidth = textLength * charWidth + 20
-    local padding = 14
-    local frameWidth = textScrollFrame.AbsoluteSize.X - padding
-
-    if textWidth > frameWidth and frameWidth > 0 then
-        textScrollFrame.CanvasSize = UDim2.new(0, textWidth + padding, 0, 0)
-    else
-        textScrollFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
-    end
+local function modifyFile(callback)
+    local s, content = pcall(function() return readfile and readfile(FILE_NAME) end)
+    local saved = (s and content and content ~= "") and HttpService:JSONDecode(content) or {}
+    callback(saved)
+    pcall(function() if writefile then writefile(FILE_NAME, HttpService:JSONEncode(saved)) end end)
 end
 
-MiniTextBox:GetPropertyChangedSignal("Text"):Connect(updateTextScroll)
-MiniPopUp:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
-    task.wait(0.1)
-    updateTextScroll()
-end)
+if PG:FindFirstChild("CubnitOmni_Final") then PG.CubnitOmni_Final:Destroy() end
 
-Create("ImageLabel", MiniPopUp, {
-    Size = UDim2.new(0, 32, 0, 32), 
-    Position = UDim2.new(0, 9, 1, -42),
-    BackgroundTransparency = 1, 
-    Image = ID_SUN, 
-    ZIndex = 31
-})
+local sg = create("ScreenGui", PG, { Name = "CubnitOmni_Final", ResetOnSpawn = false, IgnoreGuiInset = true, DisplayOrder = 999 })
+local currentId, currentInspectedData, currentInspectedName, currentTab, activeRenameId = nil, nil, "", "Players", nil
+local main = create("Frame", sg, { Size = UDim2.new(0, 380, 0, 320), Position = UDim2.new(0.5, -190, 0.5, -160), BackgroundColor3 = Color3.fromRGB(0, 0, 0), Visible = false, ZIndex = 100 }, 8)
+create("UIStroke", main, { Color = Color3.fromRGB(255, 255, 255), Thickness = 3 })
 
-Create("ImageLabel", MiniPopUp, {
-    Size = UDim2.new(0, 32, 0, 32), 
-    Position = UDim2.new(1, -41, 1, -42),
-    BackgroundTransparency = 1, 
-    Image = ID_SUN, 
-    ZIndex = 31
-})
+local launcher = create("ImageButton", sg, { Size = UDim2.new(0, 70, 0, 70), Position = UDim2.new(0.05, 0, 0.4, 0), AnchorPoint = Vector2.new(0.5, 0.5), BackgroundTransparency = 1, Image = "rbxassetid://88903575940312", ScaleType = Enum.ScaleType.Fit, ZIndex = 1000 })
+local dStart, sPos, dragging, hasMoved = nil, nil, false, false
 
-local JoinLinkBtn = Create("TextButton", MiniPopUp, {
-    Size = UDim2.new(0, 150, 0, 30),
-    Position = UDim2.new(0.5, -75, 1, -35),
-    BackgroundColor3 = Color3.fromRGB(25, 25, 25), 
-    Font = Enum.Font.Arcade, 
-    Text = "▶ JOIN",
-    TextColor3 = Color3.fromRGB(255, 255, 255), 
-    TextSize = 13, 
-    ZIndex = 32
-}, nil, { Color = Color3.fromRGB(80, 80, 80), Thickness = 1 })
+local header = create("Frame", main, { Size = UDim2.new(1, 0, 0, 45), BackgroundTransparency = 1, ZIndex = 101 })
+local title = create("TextLabel", header, { Size = UDim2.new(1, -140, 1, 0), Position = UDim2.new(0, 15, 0, 0), Text = "INSPECIONADOR DE AVATAR V1 SPANW", TextColor3 = Color3.fromRGB(255, 255, 255), Font = Enum.Font.FredokaOne, TextSize = 13, TextXAlignment = Enum.TextXAlignment.Left, BackgroundTransparency = 1, ZIndex = 102 })
 
-function CreateServerSlot(server, index)
-    local isCurrentServer = (server.id == game.JobId)
-
-    local Slot = Create("Frame", ScrollContainer, {
-        Size = UDim2.new(1, -6, 0, 87), 
-        BackgroundTransparency = 1, 
-        ZIndex = 5,
-        LayoutOrder = index
-    })
-
-    local playing = server.playing or 0
-    local maxPlayers = server.maxPlayers or 28
-    local ping = server.ping or math.random(10, 35)
-    local fps = ping > 0 and math.min(math.floor(1000 / ping), 60) or 60
-    local serverId = server.id or "N/A"
-
-    local pingColor
-    if ping < 60 then
-        pingColor = Color3.fromRGB(0, 255, 100)
-    elseif ping < 120 then
-        pingColor = Color3.fromRGB(255, 200, 50)
-    else
-        pingColor = Color3.fromRGB(255, 80, 80)
-    end
-
-    local pingTextHeader = string.format("PING : %dms", ping)
-    if isCurrentServer then
-        pingTextHeader = string.format("PING : %dms My server", ping)
-    end
-
-    local infoText = string.format(
-        "%s\nFPS : %d\nPLAYERS : %d/%d\nGAME ID : %d\nID : %s",
-        pingTextHeader, fps, playing, maxPlayers, game.PlaceId, serverId
-    )
-
-    local InfoLabel = Create("TextLabel", Slot, {
-        Size = UDim2.new(0.65, 0, 1, 0), 
-        Position = UDim2.new(0, 9, 0, 0), 
-        BackgroundTransparency = 1,
-        Font = Enum.Font.Arcade, 
-        TextXAlignment = Enum.TextXAlignment.Left, 
-        TextYAlignment = Enum.TextYAlignment.Center,
-        Text = infoText,
-        TextColor3 = Color3.fromRGB(255, 255, 255), 
-        TextSize = 11, 
-        ZIndex = 6
-    })
-
-    local lines = {}
-    for line in infoText:gmatch("[^\n]+") do
-        table.insert(lines, line)
-    end
-    if #lines >= 1 then
-        if isCurrentServer then
-            lines[1] = string.format('<font color="rgb(%d,%d,%d)">PING : %dms</font> <font color="rgb(0,255,100)">My server</font>', 
-                pingColor.R * 255, pingColor.G * 255, pingColor.B * 255, ping)
-        else
-            lines[1] = string.format('<font color="rgb(%d,%d,%d)">PING : %dms</font>', 
-                pingColor.R * 255, pingColor.G * 255, pingColor.B * 255, ping)
-        end
-        InfoLabel.Text = table.concat(lines, "\n")
-        InfoLabel.RichText = true
-    end
-
-    local JoinButton = Create("TextButton", Slot, {
-        Name = "JoinButton", 
-        Size = UDim2.new(0, 85, 0, 25), 
-        Position = UDim2.new(1, -95, 0, 11),
-        BackgroundColor3 = Color3.fromRGB(0, 0, 0), 
-        Font = Enum.Font.Arcade, 
-        Text = "JOIN",
-        TextColor3 = Color3.fromRGB(255, 255, 255), 
-        TextSize = 12, 
-        ZIndex = 6
-    }, nil, { Color = Color3.fromRGB(150, 150, 150), Thickness = 1 })
-
-    JoinButton.MouseButton1Click:Connect(function()
-        pcall(function()
-            TeleportService:TeleportToPlaceInstance(game.PlaceId, serverId, lp)
-        end)
-    end)
-
-    local CopyButton = Create("TextButton", Slot, {
-        Name = "CopyButton", 
-        Size = UDim2.new(0, 85, 0, 25), 
-        Position = UDim2.new(1, -95, 0, 46),
-        BackgroundColor3 = Color3.fromRGB(0, 0, 0), 
-        Font = Enum.Font.Arcade, 
-        Text = "COPY",
-        TextColor3 = Color3.fromRGB(255, 255, 255), 
-        TextSize = 11, 
-        ZIndex = 6
-    }, nil, { Color = Color3.fromRGB(150, 150, 150), Thickness = 1 })
-
-    CopyButton.MouseButton1Click:Connect(function()
-        if Clipboard and serverId and serverId ~= "N/A" then
-            Clipboard(serverId)
-        end
-    end)
-
-    Create("Frame", Slot, {
-        Size = UDim2.new(1, -16, 0, 1), 
-        Position = UDim2.new(0, 8, 1, -1),
-        BackgroundColor3 = Color3.fromRGB(40, 40, 40), 
-        BorderSizePixel = 0, 
-        ZIndex = 6
-    })
-
-    table.insert(serverFrames, Slot)
-    return Slot
+local function createHeaderBtn(img, offset, visible)
+    return create("ImageButton", header, { Size = UDim2.new(0, 30, 0, 30), Position = UDim2.new(1, offset, 0, 7), BackgroundTransparency = 1, Image = "rbxassetid://"..img, ScaleType = Enum.ScaleType.Fit, Visible = visible, ZIndex = 104 })
 end
 
-function GetAllServers(placeId)
-    local servers = {}
-    local currentServerFound = false
+local closeButton, folderTabBtn = createHeaderBtn("98235327129327", -38, true), createHeaderBtn("76429920789174", -75, true)
+local saveSkinBtn, databaseReturnBtn = createHeaderBtn("124334702798776", -75, false), createHeaderBtn("107874661558482", -75, false)
 
-    pcall(function()
-        local url = "https://games.roblox.com/v1/games/" .. placeId .. "/servers/Public?sortOrder=Asc&limit=100"
-        local data = HttpService:JSONDecode(game:HttpGet(url))
+local listPage = create("ScrollingFrame", main, { Size = UDim2.new(1, -20, 1, -65), Position = UDim2.new(0, 10, 0, 52), BackgroundTransparency = 1, ScrollBarThickness = 3, ScrollBarImageColor3 = Color3.fromRGB(255, 255, 255), ZIndex = 102, AutomaticCanvasSize = Enum.AutomaticSize.Y })
+create("UIListLayout", listPage, { Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder })
 
-        if data and data.data then
-            for _, server in ipairs(data.data) do
-                if server.id == game.JobId then
-                    currentServerFound = true
-                end
-                table.insert(servers, server)
+local detailPage = create("Frame", main, { Size = UDim2.new(1, 0, 1, -45), Position = UDim2.new(0, 0, 0, 45), BackgroundTransparency = 1, Visible = false, ZIndex = 102 })
+local gridScroll = create("ScrollingFrame", detailPage, { Size = UDim2.new(1, -20, 1, -65), Position = UDim2.new(0, 10, 0, 5), BackgroundTransparency = 1, ScrollBarThickness = 3, ScrollBarImageColor3 = Color3.fromRGB(255, 255, 255), ZIndex = 103, AutomaticCanvasSize = Enum.AutomaticSize.Y })
+create("UIGridLayout", gridScroll, { CellSize = UDim2.new(0, 82, 0, 115), CellPadding = UDim2.new(0, 8, 0, 8) })
+
+local confirmGui = create("Frame", sg, { Size = UDim2.new(0, 240, 0, 180), Position = UDim2.new(0.5, -120, 0.5, -90), BackgroundColor3 = Color3.fromRGB(0, 0, 0), Visible = false, ZIndex = 2000 }, 8)
+create("UIStroke", confirmGui, { Color = Color3.fromRGB(255, 255, 255), Thickness = 3 })
+local cMsg = create("TextLabel", confirmGui, { Size = UDim2.new(1, -20, 0, 50), Position = UDim2.new(0, 10, 0, 10), Text = "", TextColor3 = Color3.fromRGB(255, 255, 255), Font = Enum.Font.FredokaOne, TextSize = 15, BackgroundTransparency = 1, TextWrapped = true, ZIndex = 2001 })
+local confirmBtn = create("TextButton", confirmGui, { Size = UDim2.new(1, -30, 0, 40), Position = UDim2.new(0, 15, 0, 75), BackgroundTransparency = 1, Text = "COPIAR ID", TextColor3 = Color3.fromRGB(255, 255, 255), Font = Enum.Font.FredokaOne, TextSize = 18, ZIndex = 2002 })
+local cancelBtn = create("TextButton", confirmGui, { Size = UDim2.new(1, -30, 0, 40), Position = UDim2.new(0, 15, 0, 120), BackgroundTransparency = 1, Text = "CANCELAR", TextColor3 = Color3.fromRGB(255, 255, 255), Font = Enum.Font.FredokaOne, TextSize = 18, ZIndex = 2002 })
+
+local renameGui = create("Frame", sg, { Size = UDim2.new(0, 260, 0, 150), Position = UDim2.new(0.5, -130, 0.5, -75), BackgroundColor3 = Color3.fromRGB(10, 10, 10), Visible = false, ZIndex = 3000 }, 8)
+create("UIStroke", renameGui, { Color = Color3.fromRGB(255, 255, 255), Thickness = 2 })
+create("TextLabel", renameGui, { Size = UDim2.new(1, 0, 0, 35), Text = "NOVO NOME DA SKIN:", TextColor3 = Color3.fromRGB(255, 255, 255), Font = Enum.Font.FredokaOne, TextSize = 14, BackgroundTransparency = 1, ZIndex = 3001 })
+local renameInput = create("TextBox", renameGui, { Size = UDim2.new(1, -30, 0, 35), Position = UDim2.new(0, 15, 0, 45), BackgroundColor3 = Color3.fromRGB(25, 25, 25), Text = "", TextColor3 = Color3.fromRGB(255, 255, 255), Font = Enum.Font.GothamBold, TextSize = 13, ClearTextOnFocus = false, ZIndex = 3001 }, 4)
+create("UIStroke", renameInput, { Color = Color3.fromRGB(60, 60, 60), Thickness = 1 })
+local renameConfirmBtn = create("TextButton", renameGui, { Size = UDim2.new(0, 105, 0, 35), Position = UDim2.new(0, 15, 0, 100), BackgroundColor3 = Color3.fromRGB(30, 30, 30), Text = "CONFIRMAR", TextColor3 = Color3.fromRGB(255, 255, 255), Font = Enum.Font.FredokaOne, TextSize = 12, ZIndex = 3001 }, 4)
+local renameCancelBtn = create("TextButton", renameGui, { Size = UDim2.new(0, 105, 0, 35), Position = UDim2.new(1, -120, 0, 100), BackgroundColor3 = Color3.fromRGB(30, 30, 30), Text = "CANCELAR", TextColor3 = Color3.fromRGB(255, 255, 255), Font = Enum.Font.FredokaOne, TextSize = 12, ZIndex = 3001 }, 4)
+
+local footerDatabaseReturnBtn = create("TextButton", main, { Size = UDim2.new(1, -20, 0, 35), Position = UDim2.new(0, 10, 1, -45), BackgroundColor3 = Color3.fromRGB(20, 20, 20), Text = "VOLTAR PARA LISTA", TextColor3 = Color3.fromRGB(255, 255, 255), Font = Enum.Font.GothamBold, TextSize = 12, Visible = false, ZIndex = 149 }, 6)
+create("UIStroke", footerDatabaseReturnBtn, { Color = Color3.fromRGB(35, 35, 35), Thickness = 1 })
+local bk = create("TextButton", detailPage, { Size = UDim2.new(1, -20, 0, 35), Position = UDim2.new(0, 10, 1, -40), BackgroundColor3 = Color3.fromRGB(20, 20, 20), Text = "VOLTAR PARA LISTA", TextColor3 = Color3.fromRGB(255, 255, 255), Font = Enum.Font.GothamBold, TextSize = 12, ZIndex = 110 }, 6)
+create("UIStroke", bk, { Color = Color3.fromRGB(35, 35, 35), Thickness = 1 })
+
+local function updateVisibility()
+    if not main.Visible then return end
+    local isDetail, isPlayers = detailPage.Visible, (currentTab == "Players")
+    folderTabBtn.Visible = not isDetail and isPlayers
+    databaseReturnBtn.Visible = not isDetail and not isPlayers
+    saveSkinBtn.Visible = isDetail and isPlayers
+    footerDatabaseReturnBtn.Visible = not isDetail and not isPlayers
+    listPage.Size = UDim2.new(1, -20, 1, (not isDetail and not isPlayers) and -115 or -65)
+end
+
+local function clonarSkinBrookhaven(skinData)
+    if not wearRemote then return end
+    local character = LP.Character or LP.CharacterAdded:Wait()
+    local humanoid = character:WaitForChild("Humanoid")
+    local tentacles, maxTentativas = 0, 2
+
+    repeat
+        tentacles = tentacles + 1
+        local success, appliedDescription = pcall(function() return humanoid:GetAppliedDescription() end)
+        if not success or not appliedDescription then break end
+        local itensRestantes = 0
+        for _, acessorio in ipairs(appliedDescription:GetAccessories(true)) do
+            if acessorio.AssetId and tonumber(acessorio.AssetId) ~= 0 then
+                itensRestantes = itensRestantes + 1 pcall(function() wearRemote:InvokeServer(tonumber(acessorio.AssetId)) end) task.wait(0.9)
             end
         end
-
-        local cursor = data.nextPageCursor
-        while cursor and #servers < 100 do
-            local nextUrl = url .. "&cursor=" .. cursor
-            local nextData = HttpService:JSONDecode(game:HttpGet(nextUrl))
-            if nextData and nextData.data then
-                for _, server in ipairs(nextData.data) do
-                    if server.id == game.JobId then
-                        currentServerFound = true
-                    end
-                    table.insert(servers, server)
-                end
-            end
-            cursor = nextData.nextPageCursor
+        if appliedDescription.Shirt and tonumber(appliedDescription.Shirt) ~= 0 then
+            itensRestantes = itensRestantes + 1 pcall(function() wearRemote:InvokeServer(tonumber(appliedDescription.Shirt)) end) task.wait(0.9)
         end
-    end)
+        if appliedDescription.Pants and tonumber(appliedDescription.Pants) ~= 0 then
+            itensRestantes = itensRestantes + 1 pcall(function() wearRemote:InvokeServer(tonumber(appliedDescription.Pants)) end) task.wait(0.9)
+        end
+        if appliedDescription.Head and tonumber(appliedDescription.Head) ~= 0 and tonumber(appliedDescription.Head) ~= 4843936835 then
+            itensRestantes = itensRestantes + 1 pcall(function() wearRemote:InvokeServer(tonumber(appliedDescription.Head)) end) task.wait(0.9)
+        end
+        task.wait(0.5) 
+    until itensRestantes == 0 or tentacles >= maxTentativas
 
-    if not currentServerFound then
-        table.insert(servers, 1, {
-            id = game.JobId,
-            playing = #Players:GetPlayers(),
-            maxPlayers = 28,
-            ping = 13
-        })
+    if skinData.BodyParts then
+        for partName, partId in pairs(skinData.BodyParts) do
+            if partId and tonumber(partId) ~= 0 and tonumber(partId) ~= 4843936835 then pcall(function() wearRemote:InvokeServer(tonumber(partId)) end) task.wait(0.9) end
+        end
     end
 
-    return servers
-end
+    if skinData.Shirt and tonumber(skinData.Shirt) ~= 0 then pcall(function() wearRemote:InvokeServer(tonumber(skinData.Shirt)) end) task.wait(0.9) end
+    if skinData.Pants and tonumber(skinData.Pants) ~= 0 then pcall(function() wearRemote:InvokeServer(tonumber(skinData.Pants)) end) task.wait(0.9) end
+    if skinData.Face and tonumber(skinData.Face) ~= 0 then pcall(function() wearRemote:InvokeServer(tonumber(skinData.Face)) end) task.wait(0.9) end
 
-function UpdateServerList(servers)
-    for _, frame in ipairs(serverFrames) do
-        frame:Destroy()
-    end
-    serverFrames = {}
-
-    if #servers == 0 then
-        ScrollContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
-        return
+    if skinData.Accessories then
+        for _, accId in ipairs(skinData.Accessories) do
+            if tonumber(accId) ~= 0 then pcall(function() wearRemote:InvokeServer(tonumber(accId)) end) task.wait(0.9) end
+        end
     end
 
-    table.sort(servers, function(a, b)
-        if a.id == game.JobId then return true end
-        if b.id == game.JobId then return false end
-        return (a.ping or 999) < (b.ping or 999)
-    end)
-
-    if #servers > 50 then
-        for i = #servers, 51, -1 do
-            if servers[i].id ~= game.JobId then
-                table.remove(servers, i)
+    if skinData.Animations then
+        for animName, animId in pairs(skinData.Animations) do
+            if animId and tonumber(animId) ~= 0 then 
+                pcall(function() wearRemote:InvokeServer(tonumber(animId)) end) 
+                task.wait(0.9) 
             end
         end
     end
-
-    for i, server in ipairs(servers) do
-        CreateServerSlot(server, i)
-    end
-
-    ScrollContainer.CanvasSize = UDim2.new(0, 0, 0, #serverFrames * 92)
 end
 
-function RefreshServers()
-    if isRefreshing then return end
-    isRefreshing = true
+local function createCard(id, defName, isAnimation)
+    if not id or tostring(id) == "0" or id == "" then return end
+
+    local card = create("TextButton", gridScroll, { BackgroundColor3 = isAnimation and Color3.fromRGB(20, 15, 30) or Color3.fromRGB(15, 15, 15), Text = "", ZIndex = 104 }, 6)
+    create("UIStroke", card, { Color = isAnimation and Color3.fromRGB(230, 110, 20) or Color3.fromRGB(40, 40, 40), Thickness = 1 })
+
+    local imgLabel = create("ImageLabel", card, { Size = UDim2.new(1, -10, 0, 65), Position = UDim2.new(0, 5, 0, 5), BackgroundTransparency = 1, Image = "rbxthumb://type=Asset&id=" .. id .. "&w=150&h=150", ZIndex = 105 })
+    local label = create("TextLabel", card, { Size = UDim2.new(1, -6, 0, 35), Position = UDim2.new(0, 3, 1, -45), Text = "...", TextColor3 = Color3.fromRGB(200, 200, 200), TextSize = 8, Font = Enum.Font.Gotham, TextWrapped = true, BackgroundTransparency = 1, ZIndex = 105 })
 
     task.spawn(function()
-        UpdateServerList(GetAllServers(game.PlaceId))
-        isRefreshing = false
-    end)
-end
-
-local function makeDraggable(obj)
-    local dragging = false
-    local dragStart = nil
-    local startPos = nil
-    local isDragging = false
-
-    obj.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or 
-           input.UserInputType == Enum.UserInputType.Touch then
-            dragging = true
-            isDragging = false
-            dragStart = input.Position
-            startPos = obj.Position
-        end
-    end)
-
-    obj.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or 
-           input.UserInputType == Enum.UserInputType.Touch then
-            dragging = false
-            isDragging = false
-        end
-    end)
-
-    UIS.InputChanged:Connect(function(input)
-        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or 
-                         input.UserInputType == Enum.UserInputType.Touch) then
-            local delta = input.Position - dragStart
-            if not isDragging then
-                isDragging = true
-            end
-            obj.Position = UDim2.new(
-                startPos.X.Scale, 
-                startPos.X.Offset + delta.X, 
-                startPos.Y.Scale, 
-                startPos.Y.Offset + delta.Y
-            )
-        end
-    end)
-end
-
-makeDraggable(MainFrame)
-makeDraggable(OpenBtn)
-
-OpenBtn.MouseButton1Click:Connect(function()
-    MainFrame.Visible = not MainFrame.Visible
-end)
-
-local openMiniBtn = TitleBar:FindFirstChild("OpenIdInputBtn")
-if openMiniBtn then
-    openMiniBtn.MouseButton1Click:Connect(function()
-        MiniPopUp.Visible = not MiniPopUp.Visible
-        if MiniPopUp.Visible then
-            MiniTextBox.Text = ""
-            MiniTextBox:CaptureFocus()
-            task.wait(0.1)
-            updateTextScroll()
-        end
-    end)
-end
-
-JoinLinkBtn.MouseButton1Click:Connect(function()
-    local enteredText = MiniTextBox.Text:match("^%s*(.-)%s*$")
-
-    if enteredText and #enteredText > 0 then
-        local cleanId = enteredText:match("^[%w%-]+$")
-        if cleanId then
-            pcall(function()
-                TeleportService:TeleportToPlaceInstance(game.PlaceId, cleanId, lp)
-            end)
-            MiniPopUp.Visible = false
+        local s, info = pcall(Marketplace.GetProductInfo, Marketplace, id)
+        if s and info and info.Name then
+            label.Text = info.Name
         else
-            MiniTextBox.Text = "ID inválido! Use apenas a chave."
-            MiniTextBox.TextColor3 = Color3.fromRGB(255, 50, 50)
-            task.wait(2)
-            MiniTextBox.Text = ""
-            MiniTextBox.TextColor3 = Color3.fromRGB(0, 0, 0)
+            label.Text = defName
+            -- Fallback visual para Animações Anômalas/Cruas que não possuem Thumbnail pública
+            if isAnimation then
+                imgLabel.Image = "rbxassetid://10723362115" 
+            end
         end
-    else
-        MiniTextBox.Text = "Digite um ID válido!"
-        MiniTextBox.TextColor3 = Color3.fromRGB(255, 50, 50)
-        task.wait(1.5)
-        MiniTextBox.Text = ""
-        MiniTextBox.TextColor3 = Color3.fromRGB(0, 0, 0)
+    end)
+
+    card.MouseButton1Click:Connect(function() currentId = id cMsg.Text = "COPIAR ID DO: " .. defName:upper() confirmGui.Visible = true end)
+end
+
+local function displayAvatarData(name, data)
+    if not data then return end
+    listPage.Visible, detailPage.Visible = false, true
+    title.Text, currentInspectedName, currentInspectedData = "INSPECIONANDO: " .. name:upper(), name, data
+    updateVisibility()
+    for _, v in pairs(gridScroll:GetChildren()) do if v:IsA("TextButton") then v:Destroy() end end
+
+    createCard(data.Shirt, "Camisa") createCard(data.Pants, "Calça") createCard(data.Face, "Rosto")
+    for part, id in pairs(data.BodyParts or {}) do createCard(id, part) end
+    for _, accId in ipairs(data.Accessories or {}) do createCard(accId, "Acessório") end
+
+    if data.Animations then
+        for animName, animId in pairs(data.Animations) do
+            createCard(animId, "Anim: " .. animName, true)
+        end
+    end
+end
+
+local function clearList() for _, v in pairs(listPage:GetChildren()) do if v:IsA("Frame") or v:IsA("TextButton") then v:Destroy() end end end
+
+-- Função auxiliar para varrer o Animator e capturar IDs anômalos
+local function getPlayerAnimations(player, description)
+    local anims = {
+        Idle = description and description.IdleAnimation,
+        Walk = description and description.WalkAnimation,
+        Run = description and description.RunAnimation,
+        Jump = description and description.JumpAnimation,
+        Fall = description and description.FallAnimation,
+        Climb = description and description.ClimbAnimation,
+        Swim = description and description.SwimAnimation
+    }
+
+    local char = player.Character
+    if not char then return anims end
+
+    -- 1. Varredura via Animator (Captura Animações em Execução / Anomalias)
+    local hum = char:FindFirstChildOfClass("Humanoid")
+    local animator = hum and hum:FindFirstChildOfClass("Animator")
+    if animator then
+        for _, track in ipairs(animator:GetPlayingAnimationTracks()) do
+            if track.Animation and track.Animation.AnimationId ~= "" then
+                local rawId = track.Animation.AnimationId:match("%d+")
+                if rawId and rawId ~= "0" then
+                    anims["Ativa (" .. track.Name .. ")"] = tonumber(rawId)
+                end
+            end
+        end
+    end
+
+    -- 2. Varredura no Script Animate (Captura Idle Customizado alterado manualmente)
+    local animateScript = char:FindFirstChild("Animate")
+    if animateScript then
+        for _, child in ipairs(animateScript:GetChildren()) do
+            if child:IsA("StringValue") or child:IsA("ValueBase") or child:IsA("Folder") then
+                local animObj = child:FindFirstChildOfClass("Animation")
+                if animObj and animObj.AnimationId ~= "" then
+                    local rawId = animObj.AnimationId:match("%d+")
+                    if rawId and rawId ~= "0" then
+                        anims["Custom " .. child.Name] = tonumber(rawId)
+                    end
+                end
+            end
+        end
+    end
+
+    return anims
+end
+
+local function updatePlayerList()
+    clearList()
+    local players = Players:GetPlayers()
+    table.sort(players, function(a, b) return a == LP or (b ~= LP and a.Name:lower() < b.Name:lower()) end)
+    for _, p in pairs(players) do
+        local b = create("TextButton", listPage, { Size = UDim2.new(1, -8, 0, 35), BackgroundColor3 = Color3.fromRGB(15, 15, 15), Text = "   " .. (p == LP and "[VOCÊ] " or "") .. p.DisplayName .. " (@" .. p.Name .. ")", TextColor3 = Color3.fromRGB(255, 255, 255), TextXAlignment = Enum.TextXAlignment.Left, Font = Enum.Font.GothamBold, TextSize = 13, ZIndex = 105 }, 6)
+        create("UIStroke", b, { Color = Color3.fromRGB(35, 35, 35), Thickness = 1 })
+        b.MouseButton1Click:Connect(function()
+            local hum = p.Character and p.Character:FindFirstChildOfClass("Humanoid")
+            local s, d = pcall(function() return hum and hum:GetAppliedDescription() end)
+            
+            local collectedAnims = getPlayerAnimations(p, d)
+
+            local raw = { 
+                Shirt = d and d.Shirt or 0, 
+                Pants = d and d.Pants or 0, 
+                Face = d and d.Face or 0, 
+                Accessories = {}, 
+                BodyParts = { 
+                    Head = d and d.Head or 0, 
+                    Torso = d and d.Torso or 0, 
+                    LeftArm = d and d.LeftArm or 0, 
+                    RightArm = d and d.RightArm or 0, 
+                    LeftLeg = d and d.LeftLeg or 0, 
+                    RightLeg = d and d.RightLeg or 0 
+                },
+                Animations = collectedAnims
+            }
+
+            if d then
+                for _, a in ipairs(d:GetAccessories(true)) do 
+                    if a.AssetId and a.AssetId ~= 0 then 
+                        table.insert(raw.Accessories, a.AssetId) 
+                    end 
+                end
+            end
+
+            displayAvatarData(p.Name, raw)
+        end)
+    end
+end
+
+local function updateSavedList()
+    clearList() local saved = {} modifyFile(function(f) saved = f end)
+    if not next(saved) then
+        create("TextLabel", listPage, { Size = UDim2.new(1, 0, 0, 40), BackgroundTransparency = 1, Text = "NENHUM AVATAR SALVO.", TextColor3 = Color3.fromRGB(140, 140, 140), Font = Enum.Font.FredokaOne, TextSize = 12 }) return
+    end
+
+    local sortedKeys = {}
+    for k in pairs(saved) do table.insert(sortedKeys, k) end
+    table.sort(sortedKeys)
+
+    for _, uniqueId in ipairs(sortedKeys) do
+        local item = saved[uniqueId]
+        local container = create("Frame", listPage, { Size = UDim2.new(1, -8, 0, 35), BackgroundColor3 = Color3.fromRGB(15, 15, 15) }, 6)
+        create("UIStroke", container, { Color = Color3.fromRGB(45, 45, 45), Thickness = 1 })
+        local b = create("TextButton", container, { Size = UDim2.new(1, -110, 1, 0), BackgroundTransparency = 1, Text = "   " .. item.Name, TextColor3 = Color3.fromRGB(255, 255, 255), TextXAlignment = Enum.TextXAlignment.Left, Font = Enum.Font.GothamBold, TextSize = 11, ZIndex = 105 })
+        b.MouseButton1Click:Connect(function() displayAvatarData(item.Name, item.Data) end)
+
+        local copySkinBtn = create("ImageButton", container, { Size = UDim2.new(0, 22, 0, 22), Position = UDim2.new(1, -66, 0.5, 0), AnchorPoint = Vector2.new(1, 0.5), BackgroundTransparency = 1, Image = "rbxassetid://133764834615931", ScaleType = Enum.ScaleType.Fit, ZIndex = 106 })
+        copySkinBtn.MouseButton1Click:Connect(function() task.spawn(clonarSkinBrookhaven, item.Data) end)
+
+        local function createActionBtn(img, xOffset, cb)
+            local btn = create("ImageButton", container, { Size = UDim2.new(0, 22, 0, 22), Position = UDim2.new(1, xOffset, 0.5, 0), AnchorPoint = Vector2.new(1, 0.5), BackgroundTransparency = 1, Image = "rbxassetid://"..img, ScaleType = Enum.ScaleType.Fit, ZIndex = 106 })
+            btn.MouseButton1Click:Connect(cb)
+        end
+        createActionBtn("105157650009654", -38, function() activeRenameId, renameInput.Text, renameGui.Visible = uniqueId, item.Name, true end)
+        createActionBtn("98235327129327", -10, function() modifyFile(function(f) f[uniqueId] = nil end) updateSavedList() end)
+    end
+end
+
+local function returnToMainPlayers()
+    currentTab, title.Text, detailPage.Visible, listPage.Visible = "Players", "INSPECIONADOR DE AVATAR V1 SPANW", false, true
+    updatePlayerList() updateVisibility()
+end
+
+bk.MouseButton1Click:Connect(function() 
+    detailPage.Visible, listPage.Visible = false, true 
+    title.Text = (currentTab == "Players") and "INSPECIONADOR DE AVATAR V1 SPANW" or "INSPECIONANDO AVATARES database V1"
+    local _ = (currentTab == "Players") and updatePlayerList() or updateSavedList()
+    updateVisibility()
+end)
+
+databaseReturnBtn.MouseButton1Click:Connect(returnToMainPlayers)
+footerDatabaseReturnBtn.MouseButton1Click:Connect(returnToMainPlayers)
+closeButton.MouseButton1Click:Connect(function() sg:Destroy() end)
+cancelBtn.MouseButton1Click:Connect(function() confirmGui.Visible = false end)
+renameCancelBtn.MouseButton1Click:Connect(function() renameGui.Visible = false activeRenameId = nil end)
+
+renameConfirmBtn.MouseButton1Click:Connect(function()
+    if activeRenameId and renameInput.Text ~= "" then
+        modifyFile(function(f) if f[activeRenameId] then f[activeRenameId].Name = renameInput.Text end end)
+        renameGui.Visible, activeRenameId = false, nil updateSavedList()
     end
 end)
 
-MiniTextBox.FocusLost:Connect(function(enterPressed)
-    if enterPressed then
-        JoinLinkBtn.MouseButton1Click:Fire()
+folderTabBtn.MouseButton1Click:Connect(function()
+    currentTab, title.Text = "Database", "INSPECIONANDO AVATARES database V1"
+    updateSavedList() updateVisibility()
+end)
+
+saveSkinBtn.MouseButton1Click:Connect(function() 
+    if currentInspectedData and currentInspectedName ~= "" then 
+        modifyFile(function(f) f[HttpService:GenerateGUID(false)] = { Name = currentInspectedName, Data = currentInspectedData } end)
+        returnToMainPlayers()
+    end 
+end)
+
+confirmBtn.MouseButton1Click:Connect(function() if currentId and setclipboard then setclipboard(tostring(currentId)) confirmGui.Visible = false end end)
+
+launcher.InputBegan:Connect(function(i)
+    if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then dragging, hasMoved, dStart, sPos = true, false, i.Position, launcher.Position end
+end)
+
+UserInputService.InputChanged:Connect(function(i)
+    if dragging and (i.UserInputType == Enum.UserInputType.MouseMovement or i.UserInputType == Enum.UserInputType.Touch) then
+        local delta = i.Position - dStart if delta.Magnitude > 5 then hasMoved = true end
+        launcher.Position = UDim2.new(sPos.X.Scale, sPos.X.Offset + delta.X, sPos.Y.Scale, sPos.Y.Offset + delta.Y)
     end
 end)
 
-UIS.InputBegan:Connect(function(input, gameProcessed)
-    if gameProcessed then return end
-    if input.KeyCode == Enum.KeyCode.Escape then
-        MainFrame.Visible = not MainFrame.Visible
+UserInputService.InputEnded:Connect(function(i)
+    if (i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch) and dragging then
+        dragging = false
+        if not hasMoved then
+            main.Visible = not main.Visible
+            if main.Visible then 
+                if currentTab == "Players" then
+                    if detailPage.Visible then
+                        updateVisibility()
+                    else
+                        updatePlayerList()
+                        updateVisibility()
+                    end
+                else
+                    if detailPage.Visible then
+                        updateVisibility()
+                    else
+                        updateSavedList()
+                        updateVisibility()
+                    end
+                end
+            end
+            confirmGui.Visible, renameGui.Visible = false, false
+        end
     end
 end)
 
-RefreshServers()
+launcher.Parent, main.Visible = sg, false
+currentTab, title.Text, detailPage.Visible, listPage.Visible = "Players", "INSPECIONADOR DE AVATAR V1 SPANW", false, true
+updatePlayerList()
