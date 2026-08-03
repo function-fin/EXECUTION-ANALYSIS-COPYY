@@ -36,7 +36,6 @@ local ScreenGui = Create("ScreenGui", lp.PlayerGui, {
     ResetOnSpawn = false 
 })
 
--- Botão externo aumentado (65x65)
 local OpenBtn = Create("ImageButton", ScreenGui, {
     Name = "ExternalToggleButton",
     Size = UDim2.new(0, 65, 0, 65),
@@ -46,7 +45,6 @@ local OpenBtn = Create("ImageButton", ScreenGui, {
     ZIndex = 50
 })
 
--- Frame principal aumentado (420x310)
 local MainFrame = Create("Frame", ScreenGui, {
     Name = "MainFrame",
     Size = UDim2.new(0, 420, 0, 310),
@@ -263,15 +261,12 @@ local JoinLinkBtn = Create("TextButton", MiniPopUp, {
 function CreateServerSlot(server, index)
     local isCurrentServer = (server.id == game.JobId)
 
-    -- Se for o servidor atual, adiciona a caixa em volta (destaque)
-    local strokeData = isCurrentServer and { Color = Color3.fromRGB(255, 255, 255), Thickness = 1.5 } or nil
-
     local Slot = Create("Frame", ScrollContainer, {
         Size = UDim2.new(1, -6, 0, 87), 
         BackgroundTransparency = 1, 
         ZIndex = 5,
         LayoutOrder = index
-    }, nil, strokeData)
+    })
 
     local playing = server.playing or 0
     local maxPlayers = server.maxPlayers or 28
@@ -363,15 +358,13 @@ function CreateServerSlot(server, index)
         end
     end)
 
-    if not isCurrentServer then
-        Create("Frame", Slot, {
-            Size = UDim2.new(1, -16, 0, 1), 
-            Position = UDim2.new(0, 8, 1, -1),
-            BackgroundColor3 = Color3.fromRGB(40, 40, 40), 
-            BorderSizePixel = 0, 
-            ZIndex = 6
-        })
-    end
+    Create("Frame", Slot, {
+        Size = UDim2.new(1, -16, 0, 1), 
+        Position = UDim2.new(0, 8, 1, -1),
+        BackgroundColor3 = Color3.fromRGB(40, 40, 40), 
+        BorderSizePixel = 0, 
+        ZIndex = 6
+    })
 
     table.insert(serverFrames, Slot)
     return Slot
@@ -410,7 +403,6 @@ function GetAllServers(placeId)
         end
     end)
 
-    -- Garantir que o servidor atual apareça mesmo que a API passe batido
     if not currentServerFound then
         table.insert(servers, 1, {
             id = game.JobId,
@@ -434,7 +426,6 @@ function UpdateServerList(servers)
         return
     end
 
-    -- Ordenar colocando o servidor atual obrigatoriamente no TOPO (index 1)
     table.sort(servers, function(a, b)
         if a.id == game.JobId then return true end
         if b.id == game.JobId then return false end
