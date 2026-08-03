@@ -1,304 +1,775 @@
---====================================================================
--- BANHOUSE V37 SUPREMO - FULL PERIMETER & WIDE RANGE (CUBNIT)
--- UI REDESIGN & SEARCH SYSTEM
---====================================================================
+local HttpService = game:GetService("HttpService")
+local TeleportService = game:GetService("TeleportService")
+local UIS = game:GetService("UserInputService")
+local lp = game:GetService("Players").LocalPlayer
 
-local Players = game:GetService("Players")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local CoreGui = game:GetService("CoreGui")
-local RunService = game:GetService("RunService")
+local Clipboard = setclipboard or toclipboard or set_clipboard
+local serverFrames = {}
+local isRefreshing = false
+local currentServerId = game.JobId
+local filterMode = "all"
+local searchTerm = ""
 
--- Limpeza de sessões anteriores
-if CoreGui:FindFirstChild("BanHouse_V32_Final") then 
-    CoreGui:FindFirstChild("BanHouse_V32_Final"):Destroy() 
-end
+local oldGui = lp.PlayerGui:FindFirstChild("TerminalServerGui")
+if oldGui then oldGui:Destroy() end
 
-local Config = {
-    Ativo = false, 
-    DistanciaDefesa = 200,
-    Whitelist = {},
-    LotePos = nil,
-    LoteNome = "",
-    Running = true,
-    LastBan = {},
-    SearchFilter = ""
-}
-
---====================================
--- FUNÇÃO DE ARRASTE SUAVE
---====================================
-local function MakeDraggable(obj)
-    local dragging, dragInput, dragStart, startPos
-    obj.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            dragging = true; dragStart = input.Position; startPos = obj.Position
-            input.Changed:Connect(function()
-                if input.UserInputState == Enum.UserInputState.End then dragging = false end
-            end)
-        end
-    end)
-    obj.InputChanged:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then dragInput = input end
-    end)
-    RunService.RenderStepped:Connect(function()
-        if dragging and dragInput then
-            local delta = dragInput.Position - dragStart
-            obj.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-        end
-    end)
-end
-
---====================================
--- 1. MOTOR DE BANIMENTO (REMOTE ONLY)
---====================================
-local function ExecutarBan(alvo)
-    if not Config.Ativo or not Config.Running then return end 
-    if not alvo or not alvo.Character then return end
-    if table.find(Config.Whitelist, alvo.Name) then return end
-
-    if Config.LastBan[alvo.Name] and tick() - Config.LastBan[alvo.Name] < 1.2 then return end
-    Config.LastBan[alvo.Name] = tick()
-
-    task.spawn(function()
-        local Trigger = ReplicatedStorage:FindFirstChild("RE") and ReplicatedStorage.RE:FindFirstChild("1Playe1rTrigge1rEven1t")
-        if Trigger then 
-            pcall(function() Trigger:FireServer("BanPlayerFromHouse", alvo, alvo.Character) end) 
-        end
-
-        local Telemetry = ReplicatedStorage:FindFirstChild("Remotes") and ReplicatedStorage.Remotes:FindFirstChild("TelemetryClientInteraction")
-        if Telemetry and Config.LoteNome ~= "" then
-            local args = {
-                "filterClick",
-                {
-                    name = Config.LoteNome,
-                    itemType = "Mansions"
-                }
-            }
-            pcall(function() Telemetry:FireServer(unpack(args)) end)
-        end
-
-        local lots = workspace:FindFirstChild("001_Lots") or workspace:FindFirstChild("Plots")
-        if lots then
-            for _, casa in pairs(lots:GetChildren()) do
-                if (casa:FindFirstChild("Owner") and casa.Owner.Value == Players.LocalPlayer.Name) or casa.Name:find(Players.LocalPlayer.Name) then
-                    local houseModel = casa:FindFirstChild("HousePickedByPlayer")
-                    if houseModel then
-                        local disallow = houseModel:FindFirstChild("Permissions:Disallow", true)
-                        if disallow then pcall(function() disallow:FireServer(alvo) end) end
-                    end
-                end
-            end
-        end
-    end)
-end
-
---====================================
--- 2. INTERFACE REDESENHADA
---====================================
-local ScreenGui = Instance.new("ScreenGui", CoreGui); ScreenGui.Name = "BanHouse_V32_Final"
-
--- Botão Flutuante de Abrir
-local OpenBtn = Instance.new("ImageButton", ScreenGui)
-OpenBtn.Size = UDim2.new(0, 70, 0, 70); OpenBtn.Position = UDim2.new(0.02, 0, 0.45, 0)
-OpenBtn.Image = "rbxassetid://136990285663424"; OpenBtn.BackgroundTransparency = 1
-OpenBtn.Active = true; OpenBtn.ZIndex = 10
-MakeDraggable(OpenBtn)
-
--- Painel Principal
-local Main = Instance.new("Frame", ScreenGui)
-Main.Size = UDim2.new(0, 500, 0, 320); Main.Position = UDim2.new(0.5, -250, 0.5, -160)
-Main.BackgroundColor3 = Color3.fromRGB(12, 12, 12); Main.Active = true; Main.Visible = false
-local MainStroke = Instance.new("UIStroke", Main); MainStroke.Thickness = 2; MainStroke.Color = Color3.fromRGB(255, 255, 255)
-Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 8)
-MakeDraggable(Main)
-
--- Imagem de Fundo (Sol)
-local BgImage = Instance.new("ImageLabel", Main)
-BgImage.Size = UDim2.new(0, 260, 0, 260); BgImage.Position = UDim2.new(0.5, -130, 0.5, -130)
-BgImage.Image = "rbxassetid://85337967115080"; BgImage.BackgroundTransparency = 1; BgImage.ImageTransparency = 0.75; BgImage.ZIndex = 0
-
--- Título
-local Title = Instance.new("TextLabel", Main)
-Title.Size = UDim2.new(0, 200, 0, 40); Title.Position = UDim2.new(0.04, 0, 0.04, 0)
-Title.Text = "BAN-HOUSE"; Title.TextColor3 = Color3.new(1,1,1); Title.Font = Enum.Font.Arcade; Title.TextSize = 28; Title.BackgroundTransparency = 1; Title.TextXAlignment = "Left"; Title.ZIndex = 2
-
--- Barra de Pesquisa de Jogadores
-local SearchBox = Instance.new("TextBox", Main)
-SearchBox.Size = UDim2.new(0, 190, 0, 30); SearchBox.Position = UDim2.new(0.46, 0, 0.05, 0)
-SearchBox.PlaceholderText = "Pesquisar Jogador..."
-SearchBox.Text = ""
-SearchBox.Font = Enum.Font.Arcade; SearchBox.TextSize = 16
-SearchBox.TextColor3 = Color3.fromRGB(255, 255, 255); SearchBox.PlaceholderColor3 = Color3.fromRGB(150, 150, 150)
-SearchBox.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-SearchBox.ZIndex = 2
-Instance.new("UICorner", SearchBox).CornerRadius = UDim.new(0, 6)
-local SearchStroke = Instance.new("UIStroke", SearchBox); SearchStroke.Thickness = 1; SearchStroke.Color = Color3.fromRGB(255, 255, 255)
-
--- Botão de Fechar (Ícone Customizado)
-local CloseBtn = Instance.new("ImageButton", Main)
-CloseBtn.Size = UDim2.new(0, 32, 0, 32); CloseBtn.Position = UDim2.new(0.91, 0, 0.04, 0)
-CloseBtn.Image = "rbxassetid://98235327129327"; CloseBtn.BackgroundTransparency = 1; CloseBtn.ZIndex = 2
-
--- Lista Rolável
-local Scroll = Instance.new("ScrollingFrame", Main)
-Scroll.Size = UDim2.new(0, 240, 0, 230); Scroll.Position = UDim2.new(0.46, 0, 0.22, 0)
-Scroll.BackgroundTransparency = 1; Scroll.ScrollBarThickness = 4
-Scroll.CanvasSize = UDim2.new(0, 0, 0, 0); Scroll.ZIndex = 2
-local Layout = Instance.new("UIListLayout", Scroll)
-Layout.Padding = UDim.new(0, 6); Layout.SortOrder = Enum.SortOrder.LayoutOrder
-
---====================================
--- 3. LÓGICA DA LISTA E PESQUISA
---====================================
-local function UpdateList()
-    if not Config.Running then return end
-    for _, v in pairs(Scroll:GetChildren()) do if v:IsA("TextButton") then v:Destroy() end end
-
-    for _, p in pairs(Players:GetPlayers()) do
-        if p ~= Players.LocalPlayer then
-            local pName = p.Name:lower()
-            local pDisplay = p.DisplayName:lower()
-            local filter = Config.SearchFilter:lower()
-
-            -- Aplicação do filtro da Barra de Pesquisa
-            if filter == "" or pName:find(filter) or pDisplay:find(filter) then
-                local pBtn = Instance.new("TextButton", Scroll)
-                pBtn.Size = UDim2.new(0.95, 0, 0, 36)
-                pBtn.Text = p.DisplayName .. " (@" .. p.Name .. ")"
-                pBtn.Font = Enum.Font.Arcade; pBtn.TextSize = 15; pBtn.TextColor3 = Color3.new(1,1,1)
-                pBtn.BackgroundColor3 = table.find(Config.Whitelist, p.Name) and Color3.fromRGB(0, 120, 0) or Color3.fromRGB(28, 28, 28)
-                pBtn.ZIndex = 3
-                Instance.new("UICorner", pBtn).CornerRadius = UDim.new(0, 6)
-                
-                local btnStroke = Instance.new("UIStroke", pBtn)
-                btnStroke.Thickness = 1
-                btnStroke.Color = Color3.fromRGB(60, 60, 60)
-
-                pBtn.MouseButton1Click:Connect(function()
-                    local index = table.find(Config.Whitelist, p.Name)
-                    if index then 
-                        table.remove(Config.Whitelist, index)
-                        pBtn.BackgroundColor3 = Color3.fromRGB(28, 28, 28)
-                    else 
-                        table.insert(Config.Whitelist, p.Name)
-                        pBtn.BackgroundColor3 = Color3.fromRGB(0, 120, 0) 
-                    end
-                end)
-            end
-        end
+local function Create(className, parent, properties, corner, stroke)
+    local obj = Instance.new(className)
+    for k, v in pairs(properties) do obj[k] = v end
+    if corner then 
+        Instance.new("UICorner", obj).CornerRadius = UDim.new(0, corner)
     end
-    Scroll.CanvasSize = UDim2.new(0, 0, 0, Layout.AbsoluteContentSize.Y + 10)
+    if stroke then
+        local str = Instance.new("UIStroke", obj)
+        for k, v in pairs(stroke) do str[k] = v end
+    end
+    if parent then obj.Parent = parent end
+    return obj
 end
 
--- Atualização contínua do filtro
-SearchBox:GetPropertyChangedSignal("Text"):Connect(function()
-    Config.SearchFilter = SearchBox.Text
-    UpdateList()
+local ID_BACK = "rbxassetid://107874661558482"
+local ID_CLOSE_X = "rbxassetid://98235327129327"
+local ID_SUN = "rbxassetid://85337967115080"
+local ID_OPEN_EXT = "rbxassetid://125206663850588"
+local ID_OPEN_MINI = "rbxassetid://135311906628500"
+
+local ScreenGui = Create("ScreenGui", lp.PlayerGui, { 
+    Name = "TerminalServerGui", 
+    ResetOnSpawn = false 
+})
+
+local OpenBtn = Create("ImageButton", ScreenGui, {
+    Name = "ExternalToggleButton",
+    Size = UDim2.new(0, 52, 0, 52),
+    Position = UDim2.new(0, 10, 0.4, 0),
+    BackgroundTransparency = 1,
+    Image = ID_OPEN_EXT,
+    ZIndex = 50
+})
+
+local MainFrame = Create("Frame", ScreenGui, {
+    Name = "MainFrame",
+    Size = UDim2.new(0, 380, 0, 320),
+    Position = UDim2.new(0.5, -190, 0.5, -160),
+    BackgroundColor3 = Color3.fromRGB(10, 10, 10),
+    BorderSizePixel = 0,
+    ClipsDescendants = true,
+    Visible = true
+}, nil, { Color = Color3.fromRGB(255, 255, 255), Thickness = 1.5 })
+
+Create("ImageLabel", MainFrame, {
+    Name = "BgSpawnSymbol",
+    Size = UDim2.new(0, 200, 0, 200),
+    AnchorPoint = Vector2.new(0.5, 0.5),
+    Position = UDim2.new(0.5, 0, 0.5, 0),
+    BackgroundTransparency = 1,
+    Image = ID_SUN,
+    ImageColor3 = Color3.fromRGB(120, 120, 120),
+    ImageTransparency = 0.65,
+    ZIndex = 1
+})
+
+local TitleBar = Create("Frame", MainFrame, { 
+    Size = UDim2.new(1, 0, 0, 32), 
+    BackgroundTransparency = 1, 
+    ZIndex = 10 
+})
+
+Create("ImageButton", TitleBar, {
+    Name = "BackButton", 
+    Size = UDim2.new(0, 23, 0, 23), 
+    Position = UDim2.new(0, 7, 0.5, -11),
+    BackgroundTransparency = 1, 
+    Image = ID_BACK, 
+    ZIndex = 10
+}).MouseButton1Click:Connect(function()
+    RefreshServers()
 end)
 
-Players.PlayerAdded:Connect(function() task.wait(0.5); UpdateList() end)
-Players.PlayerRemoving:Connect(UpdateList)
+Create("ImageButton", TitleBar, {
+    Name = "OpenIdInputBtn", 
+    Size = UDim2.new(0, 23, 0, 23), 
+    Position = UDim2.new(0, 34, 0.5, -11),
+    BackgroundTransparency = 1, 
+    Image = ID_OPEN_MINI, 
+    ZIndex = 10
+})
 
-OpenBtn.MouseButton1Click:Connect(function()
-    Main.Visible = not Main.Visible
-    if Main.Visible then UpdateList() end
-end)
+local TitleText = Create("TextLabel", TitleBar, {
+    Name = "Title",
+    Size = UDim2.new(1, -150, 1, 0), 
+    Position = UDim2.new(0, 58, 0, 0), 
+    BackgroundTransparency = 1,
+    Font = Enum.Font.Arcade, 
+    Text = "JOIN SPWNCUB", 
+    TextColor3 = Color3.fromRGB(255, 255, 255),
+    TextSize = 13, 
+    ZIndex = 10
+})
 
-CloseBtn.MouseButton1Click:Connect(function()
-    Config.Running = false
-    Config.Ativo = false
+Create("ImageButton", TitleBar, {
+    Name = "CloseButton", 
+    Size = UDim2.new(0, 23, 0, 23), 
+    Position = UDim2.new(1, -30, 0.5, -11),
+    BackgroundTransparency = 1, 
+    Image = ID_CLOSE_X, 
+    ZIndex = 10
+}).MouseButton1Click:Connect(function()
     ScreenGui:Destroy()
 end)
 
--- Criador de Botões de Ação
-local function CreateActionBtn(text, pos)
-    local btn = Instance.new("TextButton", Main)
-    btn.Size = UDim2.new(0, 180, 0, 52); btn.Position = pos
-    btn.Text = text; btn.TextColor3 = Color3.new(1,1,1); btn.Font = Enum.Font.Arcade; btn.TextSize = 18
-    btn.BackgroundColor3 = Color3.fromRGB(32, 32, 32); btn.ZIndex = 2
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 8)
-    
-    local stroke = Instance.new("UIStroke", btn)
-    stroke.Thickness = 1
-    stroke.Color = Color3.fromRGB(70, 70, 70)
-    
-    return btn
+-- Barra de Pesquisa
+local SearchContainer = Create("Frame", MainFrame, {
+    Name = "SearchContainer",
+    Size = UDim2.new(1, -14, 0, 30),
+    Position = UDim2.new(0, 7, 0, 35),
+    BackgroundTransparency = 1,
+    ZIndex = 11
+})
+
+local SearchBox = Create("TextBox", SearchContainer, {
+    Name = "SearchBox",
+    Size = UDim2.new(1, -34, 1, 0),
+    BackgroundColor3 = Color3.fromRGB(25, 25, 25),
+    Font = Enum.Font.Arcade,
+    PlaceholderText = "🔍 PESQUISAR (ID, players, vagas)...",
+    PlaceholderColor3 = Color3.fromRGB(120, 120, 120),
+    Text = "",
+    TextColor3 = Color3.fromRGB(255, 255, 255),
+    TextSize = 10,
+    ZIndex = 12,
+    ClearTextOnFocus = false
+}, 8, { Color = Color3.fromRGB(100, 100, 100), Thickness = 1 })
+
+local FilterBtn = Create("TextButton", SearchContainer, {
+    Name = "FilterBtn",
+    Size = UDim2.new(0, 28, 0, 28),
+    Position = UDim2.new(1, -28, 0, 1),
+    BackgroundColor3 = Color3.fromRGB(40, 40, 40),
+    Font = Enum.Font.Arcade,
+    Text = "⚡",
+    TextColor3 = Color3.fromRGB(255, 255, 255),
+    TextSize = 14,
+    ZIndex = 13
+}, 6, { Color = Color3.fromRGB(100, 100, 100), Thickness = 1 })
+
+-- Botão para ir ao servidor atual
+local CurrentServerBtn = Create("TextButton", TitleBar, {
+    Name = "CurrentServerBtn",
+    Size = UDim2.new(0, 20, 0, 20),
+    Position = UDim2.new(0, 170, 0.5, -10),
+    BackgroundTransparency = 1,
+    Font = Enum.Font.Arcade,
+    Text = "📍",
+    TextColor3 = Color3.fromRGB(0, 255, 100),
+    TextSize = 16,
+    ZIndex = 10
+})
+
+CurrentServerBtn.MouseButton1Click:Connect(function()
+    for _, frame in ipairs(serverFrames) do
+        if frame:GetAttribute("IsCurrentServer") then
+            local yPos = (frame.LayoutOrder - 1) * 92
+            ScrollContainer.CanvasPosition = Vector2.new(0, yPos)
+            break
+        end
+    end
+end)
+
+Create("Frame", MainFrame, {
+    Size = UDim2.new(1, 0, 0, 1), 
+    Position = UDim2.new(0, 0, 0, 32),
+    BackgroundColor3 = Color3.fromRGB(60, 60, 60), 
+    BorderSizePixel = 0, 
+    ZIndex = 10
+})
+
+local ScrollContainer = Create("ScrollingFrame", MainFrame, {
+    Name = "ServerList", 
+    Size = UDim2.new(1, -7, 1, -71), 
+    Position = UDim2.new(0, 3.5, 0, 70),
+    BackgroundTransparency = 1, 
+    BorderSizePixel = 0, 
+    CanvasSize = UDim2.new(0, 0, 0, 0),
+    ScrollBarThickness = 3, 
+    ScrollBarImageColor3 = Color3.fromRGB(150, 150, 150), 
+    ZIndex = 5
+})
+
+Create("UIListLayout", ScrollContainer, { 
+    SortOrder = Enum.SortOrder.LayoutOrder 
+})
+
+local MiniPopUp = Create("Frame", MainFrame, {
+    Name = "MiniPopUp", 
+    Size = UDim2.new(0, 310, 0, 150), 
+    Position = UDim2.new(0.5, -155, 0.5, -75),
+    BackgroundColor3 = Color3.fromRGB(15, 15, 15), 
+    BorderSizePixel = 0, 
+    ZIndex = 30, 
+    Visible = false
+}, nil, { Color = Color3.fromRGB(255, 255, 255), Thickness = 1.5 })
+
+Create("ImageButton", MiniPopUp, {
+    Name = "MiniCloseBtn", 
+    Size = UDim2.new(0, 21, 0, 21), 
+    Position = UDim2.new(1, -27, 0, 6),
+    BackgroundTransparency = 1, 
+    Image = ID_CLOSE_X, 
+    ZIndex = 32
+}).MouseButton1Click:Connect(function()
+    MiniPopUp.Visible = false
+end)
+
+Create("TextLabel", MiniPopUp, {
+    Size = UDim2.new(1, -40, 0, 32), 
+    Position = UDim2.new(0, 9, 0, 7), 
+    BackgroundTransparency = 1,
+    Font = Enum.Font.Arcade, 
+    Text = "Cole o ID abaixo:",
+    TextColor3 = Color3.fromRGB(255, 255, 255), 
+    TextSize = 13, 
+    ZIndex = 31,
+    TextXAlignment = Enum.TextXAlignment.Left
+})
+
+local InputPill = Create("Frame", MiniPopUp, {
+    Size = UDim2.new(0.9, 0, 0, 30),
+    Position = UDim2.new(0.05, 0, 0, 46),
+    BackgroundColor3 = Color3.fromRGB(255, 255, 255), 
+    BorderSizePixel = 0, 
+    ZIndex = 31
+}, 12)
+
+local textScrollFrame = Create("ScrollingFrame", InputPill, {
+    Size = UDim2.new(1, -16, 1, -4),
+    Position = UDim2.new(0, 8, 0, 2),
+    BackgroundTransparency = 1,
+    BorderSizePixel = 0,
+    ScrollBarThickness = 2,
+    ScrollBarImageColor3 = Color3.fromRGB(100, 100, 100),
+    ScrollBarImageTransparency = 0.5,
+    ZIndex = 32,
+    ClipsDescendants = true,
+    HorizontalScrollBarInset = Enum.ScrollBarInset.ScrollBar,
+    VerticalScrollBarInset = Enum.ScrollBarInset.ScrollBar
+})
+
+local MiniTextBox = Create("TextBox", textScrollFrame, {
+    Size = UDim2.new(1, 0, 1, 0),
+    Position = UDim2.new(0, 0, 0, 0),
+    BackgroundTransparency = 1,
+    Font = Enum.Font.SourceSans,
+    Text = "",
+    PlaceholderText = "Cole apenas a chave: 4b74e345...",
+    PlaceholderColor3 = Color3.fromRGB(150, 150, 150),
+    TextColor3 = Color3.fromRGB(0, 0, 0),
+    TextSize = 13,
+    ZIndex = 33,
+    TextXAlignment = Enum.TextXAlignment.Left,
+    TextYAlignment = Enum.TextYAlignment.Center,
+    ClearTextOnFocus = false
+})
+
+local function updateTextScroll()
+    local textLength = #MiniTextBox.Text
+    local charWidth = 7.5
+    local textWidth = textLength * charWidth + 20
+    local padding = 14
+    local frameWidth = textScrollFrame.AbsoluteSize.X - padding
+
+    if textWidth > frameWidth and frameWidth > 0 then
+        textScrollFrame.CanvasSize = UDim2.new(0, textWidth + padding, 0, 0)
+    else
+        textScrollFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+    end
 end
 
-local BtnMark = CreateActionBtn("Marcar House", UDim2.new(0.04, 0, 0.22, 0))
-local BtnClear = CreateActionBtn("Limpar Terreno", UDim2.new(0.04, 0, 0.45, 0))
-local BtnActive = CreateActionBtn("Defense: OFF", UDim2.new(0.04, 0, 0.68, 0))
+MiniTextBox:GetPropertyChangedSignal("Text"):Connect(updateTextScroll)
+MiniPopUp:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
+    task.wait(0.1)
+    updateTextScroll()
+end)
 
-BtnMark.MouseButton1Click:Connect(function()
-    local lots = workspace:FindFirstChild("001_Lots") or workspace:FindFirstChild("Plots")
-    if lots then
-        for _, p in pairs(lots:GetChildren()) do
-            local owner = p:FindFirstChild("Owner")
-            if (owner and owner.Value == Players.LocalPlayer.Name) or p.Name:find(Players.LocalPlayer.Name) then
-                Config.LotePos = p:GetPivot().Position
-                Config.LoteNome = ""
+Create("ImageLabel", MiniPopUp, {
+    Size = UDim2.new(0, 32, 0, 32), 
+    Position = UDim2.new(0, 9, 1, -42),
+    BackgroundTransparency = 1, 
+    Image = ID_SUN, 
+    ZIndex = 31
+})
 
-                local picked = p:FindFirstChild("HousePickedByPlayer")
-                if picked then
-                    for _, child in pairs(picked:GetChildren()) do
-                        if child:IsA("Model") and (child.Name:find("_Mansion") or child.Name:find("Mansion")) then
-                            Config.LoteNome = child.Name
-                            break
-                        end
-                    end
+Create("ImageLabel", MiniPopUp, {
+    Size = UDim2.new(0, 32, 0, 32), 
+    Position = UDim2.new(1, -41, 1, -42),
+    BackgroundTransparency = 1, 
+    Image = ID_SUN, 
+    ZIndex = 31
+})
+
+local JoinLinkBtn = Create("TextButton", MiniPopUp, {
+    Size = UDim2.new(0, 150, 0, 30),
+    Position = UDim2.new(0.5, -75, 1, -35),
+    BackgroundColor3 = Color3.fromRGB(25, 25, 25), 
+    Font = Enum.Font.Arcade, 
+    Text = "▶ JOIN",
+    TextColor3 = Color3.fromRGB(255, 255, 255), 
+    TextSize = 13, 
+    ZIndex = 32
+}, nil, { Color = Color3.fromRGB(80, 80, 80), Thickness = 1 })
+
+function CreateServerSlot(server, index)
+    local Slot = Create("Frame", ScrollContainer, {
+        Size = UDim2.new(1, 0, 0, 87), 
+        BackgroundTransparency = 1, 
+        ZIndex = 5,
+        LayoutOrder = index
+    })
+
+    local playing = server.playing or 0
+    local maxPlayers = server.maxPlayers or 6
+    local ping = server.ping or math.random(20, 150)
+    local fps = ping > 0 and math.min(math.floor(1000 / ping), 60) or 0
+    local serverId = server.id or "N/A"
+    
+    -- Destaque do servidor atual
+    local isCurrentServer = (serverId == currentServerId)
+    Slot:SetAttribute("IsCurrentServer", isCurrentServer)
+    
+    if isCurrentServer then
+        -- Fundo destacado
+        local highlightBg = Create("Frame", Slot, {
+            Name = "CurrentHighlight",
+            Size = UDim2.new(1, 0, 1, 0),
+            BackgroundColor3 = Color3.fromRGB(0, 100, 0),
+            BackgroundTransparency = 0.75,
+            BorderSizePixel = 0,
+            ZIndex = 4
+        }, 8)
+        
+        -- Badge "VOCÊ ESTÁ AQUI"
+        local badge = Create("TextLabel", Slot, {
+            Name = "CurrentBadge",
+            Size = UDim2.new(0, 110, 0, 18),
+            Position = UDim2.new(0, 9, 0, 2),
+            BackgroundColor3 = Color3.fromRGB(0, 255, 100),
+            BackgroundTransparency = 0.2,
+            Font = Enum.Font.Arcade,
+            Text = "⭐ VOCÊ ESTÁ AQUI",
+            TextColor3 = Color3.fromRGB(255, 255, 255),
+            TextSize = 9,
+            ZIndex = 7
+        }, 6, { Color = Color3.fromRGB(0, 255, 100), Thickness = 1 })
+        
+        -- Animação sutil de pulso
+        task.spawn(function()
+            while badge and badge.Parent do
+                for i = 1, 10 do
+                    badge.BackgroundTransparency = 0.2 + (i * 0.05)
+                    task.wait(0.05)
                 end
-
-                if Config.LoteNome == "" then
-                    local houseId = p:FindFirstChild("HouseID") or p:FindFirstChild("CurrentHouse")
-                    if houseId and houseId:IsA("StringValue") then
-                        Config.LoteNome = houseId.Value
-                    end
+                for i = 10, 1, -1 do
+                    badge.BackgroundTransparency = 0.2 + (i * 0.05)
+                    task.wait(0.05)
                 end
+            end
+        end)
+    end
 
-                BtnMark.BackgroundColor3 = Color3.fromRGB(0, 80, 200)
-                BtnMark.Text = Config.LoteNome ~= "" and "Sync: " .. Config.LoteNome or "Sync: House"
-                return
+    local pingColor
+    if ping < 60 then
+        pingColor = Color3.fromRGB(0, 255, 100)
+    elseif ping < 120 then
+        pingColor = Color3.fromRGB(255, 200, 50)
+    else
+        pingColor = Color3.fromRGB(255, 80, 80)
+    end
+
+    local vacancies = maxPlayers - playing
+    local fillPercent = playing / math.max(maxPlayers, 1)
+    local fillColor
+    if fillPercent >= 0.9 then
+        fillColor = Color3.fromRGB(255, 50, 50)
+    elseif fillPercent >= 0.7 then
+        fillColor = Color3.fromRGB(255, 200, 50)
+    else
+        fillColor = Color3.fromRGB(50, 255, 100)
+    end
+
+    local infoText = string.format(
+        "PING : %dms\nFPS : %d\nPLAYERS : %d/%d\nGAME ID : %d\nID : %s",
+        ping, fps, playing, maxPlayers, game.PlaceId, serverId
+    )
+
+    local InfoLabel = Create("TextLabel", Slot, {
+        Size = UDim2.new(0.55, 0, 1, 0), 
+        Position = UDim2.new(0, 9, 0, 0), 
+        BackgroundTransparency = 1,
+        Font = Enum.Font.Arcade, 
+        TextXAlignment = Enum.TextXAlignment.Left, 
+        TextYAlignment = Enum.TextYAlignment.Center,
+        Text = infoText,
+        TextColor3 = Color3.fromRGB(255, 255, 255), 
+        TextSize = 11, 
+        ZIndex = 6
+    })
+
+    local lines = {}
+    for line in infoText:gmatch("[^\n]+") do
+        table.insert(lines, line)
+    end
+    if #lines >= 1 then
+        lines[1] = string.format('<font color="rgb(%d,%d,%d)">PING : %dms</font>', 
+            pingColor.R * 255, pingColor.G * 255, pingColor.B * 255, ping)
+        InfoLabel.Text = table.concat(lines, "\n")
+        InfoLabel.RichText = true
+    end
+
+    -- Barra de progresso de lotação
+    local fillBarBg = Create("Frame", Slot, {
+        Size = UDim2.new(0, 60, 0, 4),
+        Position = UDim2.new(1, -70, 0, 80),
+        BackgroundColor3 = Color3.fromRGB(60, 60, 60),
+        BorderSizePixel = 0,
+        ZIndex = 6
+    }, 2)
+
+    Create("Frame", fillBarBg, {
+        Size = UDim2.new(fillPercent, 0, 1, 0),
+        BackgroundColor3 = fillColor,
+        BorderSizePixel = 0,
+        ZIndex = 7
+    }, 2)
+
+    -- Texto de vagas
+    local vacanciesText = Create("TextLabel", Slot, {
+        Size = UDim2.new(0, 60, 0, 12),
+        Position = UDim2.new(1, -70, 0, 66),
+        BackgroundTransparency = 1,
+        Font = Enum.Font.Arcade,
+        Text = vacancies > 0 and string.format("%d vagas", vacancies) or "LOTADO",
+        TextColor3 = fillColor,
+        TextSize = 8,
+        ZIndex = 6
+    })
+
+    -- Badge especial para servidores quase cheios
+    if vacancies <= 5 and vacancies > 0 then
+        local hotBadge = Create("TextLabel", Slot, {
+            Size = UDim2.new(0, 40, 0, 12),
+            Position = UDim2.new(0.55, 10, 0, 68),
+            BackgroundColor3 = Color3.fromRGB(255, 100, 50),
+            BackgroundTransparency = 0.3,
+            Font = Enum.Font.Arcade,
+            Text = "🔥",
+            TextColor3 = Color3.fromRGB(255, 255, 255),
+            TextSize = 8,
+            ZIndex = 7
+        }, 4)
+    end
+
+    -- Botão JOIN
+    local JoinButton = Create("TextButton", Slot, {
+        Name = "JoinButton", 
+        Size = UDim2.new(0, 78, 0, 25), 
+        Position = UDim2.new(1, -88, 0, 11),
+        BackgroundColor3 = Color3.fromRGB(0, 0, 0), 
+        Font = Enum.Font.Arcade, 
+        Text = "JOIN",
+        TextColor3 = Color3.fromRGB(255, 255, 255), 
+        TextSize = 12, 
+        ZIndex = 6
+    }, nil, { Color = Color3.fromRGB(150, 150, 150), Thickness = 1 })
+
+    JoinButton.MouseButton1Click:Connect(function()
+        pcall(function()
+            TeleportService:TeleportToPlaceInstance(game.PlaceId, serverId, lp)
+        end)
+    end)
+
+    -- Botão COPY
+    local CopyButton = Create("TextButton", Slot, {
+        Name = "CopyButton", 
+        Size = UDim2.new(0, 78, 0, 25), 
+        Position = UDim2.new(1, -88, 0, 46),
+        BackgroundColor3 = Color3.fromRGB(0, 0, 0), 
+        Font = Enum.Font.Arcade, 
+        Text = "COPY",
+        TextColor3 = Color3.fromRGB(255, 255, 255), 
+        TextSize = 11, 
+        ZIndex = 6
+    }, nil, { Color = Color3.fromRGB(150, 150, 150), Thickness = 1 })
+
+    CopyButton.MouseButton1Click:Connect(function()
+        if Clipboard and serverId and serverId ~= "N/A" then
+            Clipboard(serverId)
+        end
+    end)
+
+    Create("Frame", Slot, {
+        Size = UDim2.new(1, -16, 0, 1), 
+        Position = UDim2.new(0, 8, 1, -1),
+        BackgroundColor3 = Color3.fromRGB(40, 40, 40), 
+        BorderSizePixel = 0, 
+        ZIndex = 6
+    })
+
+    table.insert(serverFrames, Slot)
+    return Slot
+end
+
+function GetAllServers(placeId)
+    local servers = {}
+
+    pcall(function()
+        local url = "https://games.roblox.com/v1/games/" .. placeId .. "/servers/Public?sortOrder=Asc&limit=100"
+        local data = HttpService:JSONDecode(game:HttpGet(url))
+
+        if data and data.data then
+            for _, server in ipairs(data.data) do
+                table.insert(servers, server)
             end
         end
-    end
-    BtnMark.Text = "Not Found!"; task.wait(1); BtnMark.Text = "Marcar House"
-end)
 
-BtnActive.MouseButton1Click:Connect(function()
-    if not Config.LotePos then 
-        BtnActive.Text = "Sync First!"; task.wait(1); BtnActive.Text = Config.Ativo and "Defense: ON" or "Defense: OFF"
-        return 
-    end
-    Config.Ativo = not Config.Ativo
-    BtnActive.Text = Config.Ativo and "Defense: ON" or "Defense: OFF"
-    BtnActive.BackgroundColor3 = Config.Ativo and Color3.fromRGB(0, 150, 0) or Color3.fromRGB(32, 32, 32)
-end)
-
-BtnClear.MouseButton1Click:Connect(function()
-    local oldState = Config.Ativo
-    Config.Ativo = true
-    for _, p in pairs(Players:GetPlayers()) do if p ~= Players.LocalPlayer then ExecutarBan(p) end end
-    Config.Ativo = oldState
-end)
-
-UpdateList()
-
---====================================
--- 4. RADAR HEARTBEAT
---====================================
-RunService.Heartbeat:Connect(function()
-    if Config.Running and Config.Ativo and Config.LotePos then
-        for _, p in pairs(Players:GetPlayers()) do
-            if p ~= Players.LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
-                local dist = (Config.LotePos - p.Character.HumanoidRootPart.Position).Magnitude
-
-                local isMansion = (Config.LoteNome:find("Mansion") or Config.LoteNome:find("01"))
-                local threshold = isMansion and 300 or Config.DistanciaDefesa
-
-                if dist < threshold then 
-                    ExecutarBan(p) 
+        local cursor = data.nextPageCursor
+        while cursor and #servers < 100 do
+            local nextUrl = url .. "&cursor=" .. cursor
+            local nextData = HttpService:JSONDecode(game:HttpGet(nextUrl))
+            if nextData and nextData.data then
+                for _, server in ipairs(nextData.data) do
+                    table.insert(servers, server)
                 end
             end
+            cursor = nextData.nextPageCursor
+        end
+    end)
+
+    return servers
+end
+
+function FilterServers(servers)
+    local filtered = {}
+    
+    for _, server in ipairs(servers) do
+        local playing = server.playing or 0
+        local maxPlayers = server.maxPlayers or 6
+        local vacancies = maxPlayers - playing
+        local serverId = server.id or ""
+        local ping = server.ping or 999
+        
+        local passesFilter = true
+        
+        if filterMode == "almostFull" then
+            passesFilter = (vacancies <= 5 and vacancies > 0)
+        elseif filterMode == "lowPing" then
+            passesFilter = (ping < 80)
+        end
+        
+        if searchTerm ~= "" and passesFilter then
+            local term = searchTerm:lower()
+            passesFilter = (
+                serverId:lower():find(term) or
+                tostring(playing):find(term) or
+                ("vagas"):find(term) and vacancies > 0 or
+                ("lotado"):find(term) and vacancies == 0
+            )
+        end
+        
+        if passesFilter then
+            table.insert(filtered, server)
         end
     end
+    
+    return filtered
+end
+
+function UpdateServerList(servers)
+    for _, frame in ipairs(serverFrames) do
+        frame:Destroy()
+    end
+    serverFrames = {}
+
+    local filteredServers = FilterServers(servers)
+    
+    if #filteredServers == 0 then
+        ScrollContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
+        TitleText.Text = "JOIN SPWNCUB [0/" .. #servers .. "]"
+        
+        -- Mensagem quando não encontra resultados
+        Create("TextLabel", ScrollContainer, {
+            Size = UDim2.new(1, 0, 0, 40),
+            BackgroundTransparency = 1,
+            Font = Enum.Font.Arcade,
+            Text = "Nenhum servidor encontrado",
+            TextColor3 = Color3.fromRGB(150, 150, 150),
+            TextSize = 12,
+            ZIndex = 5
+        })
+        return
+    end
+
+    table.sort(filteredServers, function(a, b)
+        return (a.ping or 999) < (b.ping or 999)
+    end)
+
+    if #filteredServers > 50 then
+        for i = #filteredServers, 51, -1 do
+            table.remove(filteredServers, i)
+        end
+    end
+
+    for i, server in ipairs(filteredServers) do
+        CreateServerSlot(server, i)
+    end
+
+    ScrollContainer.CanvasSize = UDim2.new(0, 0, 0, #serverFrames * 92)
+    TitleText.Text = "JOIN SPWNCUB [" .. #filteredServers .. "/" .. #servers .. "]"
+end
+
+function RefreshServers()
+    if isRefreshing then return end
+    isRefreshing = true
+    
+    TitleText.Text = "JOIN SPWNCUB [CARREGANDO...]"
+
+    task.spawn(function()
+        UpdateServerList(GetAllServers(game.PlaceId))
+        isRefreshing = false
+    end)
+end
+
+local function makeDraggable(obj)
+    local dragging = false
+    local dragStart = nil
+    local startPos = nil
+    local isDragging = false
+
+    obj.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or 
+           input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            isDragging = false
+            dragStart = input.Position
+            startPos = obj.Position
+        end
+    end)
+
+    obj.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or 
+           input.UserInputType == Enum.UserInputType.Touch then
+            dragging = false
+            isDragging = false
+        end
+    end)
+
+    UIS.InputChanged:Connect(function(input)
+        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or 
+                         input.UserInputType == Enum.UserInputType.Touch) then
+            local delta = input.Position - dragStart
+            if not isDragging then
+                isDragging = true
+            end
+            obj.Position = UDim2.new(
+                startPos.X.Scale, 
+                startPos.X.Offset + delta.X, 
+                startPos.Y.Scale, 
+                startPos.Y.Offset + delta.Y
+            )
+        end
+    end)
+end
+
+makeDraggable(MainFrame)
+makeDraggable(OpenBtn)
+
+OpenBtn.MouseButton1Click:Connect(function()
+    MainFrame.Visible = not MainFrame.Visible
+    if MainFrame.Visible then
+        RefreshServers()
+    end
 end)
+
+-- Eventos da barra de pesquisa
+SearchBox:GetPropertyChangedSignal("Text"):Connect(function()
+    searchTerm = SearchBox.Text:lower()
+    RefreshServers()
+end)
+
+-- Botão de filtro rápido
+local filterModes = {"all", "almostFull", "lowPing"}
+local filterIcons = {"⚡", "🔥", "📶"}
+local filterNames = {"TODOS", "QUASE CHEIO", "PING BAIXO"}
+
+FilterBtn.MouseButton1Click:Connect(function()
+    local currentIndex = table.find(filterModes, filterMode) or 1
+    currentIndex = currentIndex % #filterModes + 1
+    filterMode = filterModes[currentIndex]
+    FilterBtn.Text = filterIcons[currentIndex]
+    RefreshServers()
+end)
+
+-- Tooltip do botão de filtro
+FilterBtn.MouseEnter:Connect(function()
+    local currentIndex = table.find(filterModes, filterMode) or 1
+    TitleText.Text = "FILTRO: " .. filterNames[currentIndex]
+end)
+
+FilterBtn.MouseLeave:Connect(function()
+    RefreshServers()
+end)
+
+-- Eventos do MiniPopUp
+local openMiniBtn = TitleBar:FindFirstChild("OpenIdInputBtn")
+if openMiniBtn then
+    openMiniBtn.MouseButton1Click:Connect(function()
+        MiniPopUp.Visible = not MiniPopUp.Visible
+        if MiniPopUp.Visible then
+            MiniTextBox.Text = ""
+            MiniTextBox:CaptureFocus()
+            task.wait(0.1)
+            updateTextScroll()
+        end
+    end)
+end
+
+JoinLinkBtn.MouseButton1Click:Connect(function()
+    local enteredText = MiniTextBox.Text:match("^%s*(.-)%s*$")
+
+    if enteredText and #enteredText > 0 then
+        local cleanId = enteredText:match("^[%w%-]+$")
+        if cleanId then
+            pcall(function()
+                TeleportService:TeleportToPlaceInstance(game.PlaceId, cleanId, lp)
+            end)
+            MiniPopUp.Visible = false
+        else
+            MiniTextBox.Text = "ID inválido!"
+            MiniTextBox.TextColor3 = Color3.fromRGB(255, 50, 50)
+            task.wait(2)
+            MiniTextBox.Text = ""
+            MiniTextBox.TextColor3 = Color3.fromRGB(0, 0, 0)
+        end
+    else
+        MiniTextBox.Text = "Digite um ID!"
+        MiniTextBox.TextColor3 = Color3.fromRGB(255, 50, 50)
+        task.wait(1.5)
+        MiniTextBox.Text = ""
+        MiniTextBox.TextColor3 = Color3.fromRGB(0, 0, 0)
+    end
+end)
+
+MiniTextBox.FocusLost:Connect(function(enterPressed)
+    if enterPressed then
+        JoinLinkBtn.MouseButton1Click:Fire()
+    end
+end)
+
+UIS.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    if input.KeyCode == Enum.KeyCode.Escape then
+        MainFrame.Visible = not MainFrame.Visible
+    end
+end)
+
+-- Inicialização
+RefreshServers()
